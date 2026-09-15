@@ -16,6 +16,8 @@ public class EditorGUI extends javax.swing.JFrame {
      */
     public EditorGUI() {
         initComponents();
+        
+        editor.setCaretPosition(0);
     }
 
     /**
@@ -27,33 +29,47 @@ public class EditorGUI extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jTextArea1 = new javax.swing.JTextArea();
-        jLabel1 = new javax.swing.JLabel();
+        alertsPaneLabel = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
-        jTextPane1 = new javax.swing.JTextPane();
-        jTextField1 = new javax.swing.JTextField();
-        jButton1 = new javax.swing.JButton();
+        alertsTextPane = new javax.swing.JTextPane();
+        searchTermTextField = new javax.swing.JTextField();
+        performSearchButton = new javax.swing.JButton();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        editor = new EditorModel();
+        ignoreCaseCheckBox = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        jTextArea1.setColumns(20);
-        jTextArea1.setRows(5);
-        jTextArea1.setText("Hier wird an mehrzeiligen Texten gearbeitet.\nWenn man \"Suchtext\" im Textelf an der Seite eingibt\nund den Button \"Suchen\" betätigt, dann soll Suchtext gefunden werden.\n\nSuChTeXt wird nur gefunden, wenn Großschreibung ignoriert wird.");
-        jScrollPane1.setViewportView(jTextArea1);
+        alertsPaneLabel.setText("Meldungen");
 
-        jLabel1.setText("Meldungen");
+        alertsTextPane.setEditable(false);
+        jScrollPane2.setViewportView(alertsTextPane);
 
-        jScrollPane2.setViewportView(jTextPane1);
-
-        jTextField1.setText("Suchtext");
-        jTextField1.addActionListener(new java.awt.event.ActionListener() {
+        searchTermTextField.setText("Suchtext");
+        searchTermTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jTextField1ActionPerformed(evt);
+                searchTermTextFieldActionPerformed(evt);
             }
         });
 
-        jButton1.setText("Suchen");
+        performSearchButton.setText("Suchen");
+        performSearchButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                performSearchButtonActionPerformed(evt);
+            }
+        });
+
+        editor.setColumns(20);
+        editor.setRows(5);
+        editor.setText("Hier wird an mehrzeiligen Texten gearbeitet.\nWenn man \"Suchtext\" im Textelf an der Seite eingibt\nund den Button \"Suchen\" betätigt, dann soll Suchtext gefunden werden.\n\nSuChTeXt wird nur gefunden, wenn Großschreibung ignoriert wird.");
+        jScrollPane3.setViewportView(editor);
+
+        ignoreCaseCheckBox.setText("Groß- und Kleinschreibung ignorieren");
+        ignoreCaseCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ignoreCaseCheckBoxActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -63,19 +79,17 @@ public class EditorGUI extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 559, Short.MAX_VALUE)
-                            .addComponent(jScrollPane1))
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(34, 34, 34)
-                                .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 142, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 142, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addComponent(alertsPaneLabel)
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 588, Short.MAX_VALUE)
+                            .addComponent(jScrollPane3))
+                        .addGap(34, 34, 34)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(searchTermTextField)
+                            .addComponent(performSearchButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(ignoreCaseCheckBox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -83,13 +97,15 @@ public class EditorGUI extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 289, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(searchTermTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton1)))
+                        .addComponent(performSearchButton, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(ignoreCaseCheckBox))
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 289, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
-                .addComponent(jLabel1)
+                .addComponent(alertsPaneLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 86, Short.MAX_VALUE))
@@ -98,9 +114,17 @@ public class EditorGUI extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField1ActionPerformed
+    private void searchTermTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchTermTextFieldActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jTextField1ActionPerformed
+    }//GEN-LAST:event_searchTermTextFieldActionPerformed
+
+    private void ignoreCaseCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ignoreCaseCheckBoxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_ignoreCaseCheckBoxActionPerformed
+
+    private void performSearchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_performSearchButtonActionPerformed
+        performSearch();
+    }//GEN-LAST:event_performSearchButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -128,12 +152,22 @@ public class EditorGUI extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel alertsPaneLabel;
+    private javax.swing.JTextPane alertsTextPane;
+    private EditorModel editor;
+    private javax.swing.JCheckBox ignoreCaseCheckBox;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JTextArea jTextArea1;
-    private javax.swing.JTextField jTextField1;
-    private javax.swing.JTextPane jTextPane1;
+    private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JButton performSearchButton;
+    private javax.swing.JTextField searchTermTextField;
     // End of variables declaration//GEN-END:variables
+
+    private void performSearch() {
+        String searchString = searchTermTextField.getText();
+        boolean ignoreCase = ignoreCaseCheckBox.isSelected();
+        SearchResult searchResult = editor.find(searchString, ignoreCase);
+        
+        alertsTextPane.setText(SearchResultFormatterHelper.formatSearchResult(searchResult));
+        editor.requestFocus();
+    }
 }
