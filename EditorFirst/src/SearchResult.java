@@ -7,5 +7,5 @@
  *
  * @author info
  */
-public record SearchResult(int caretPosition, String searchTerm, boolean searchTermFound) {
+public record SearchResult(int findPosition, String searchTerm, boolean searchTermFound) {
 }

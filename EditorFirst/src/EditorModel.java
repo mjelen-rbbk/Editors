@@ -38,4 +38,14 @@ public class EditorModel extends JTextArea {
             return new SearchResult(findPosition, searchString, true);
         }
     }
+    
+    public ReplaceResult replace(String replaceString) {
+        if (this.getSelectedText() == null) {
+            return new ReplaceResult(-1, replaceString, false);
+        }
+        
+        int replacePosition = this.getSelectionStart();
+        this.replaceSelection(replaceString);
+        return new ReplaceResult(replacePosition, replaceString, true);
+    }
 }

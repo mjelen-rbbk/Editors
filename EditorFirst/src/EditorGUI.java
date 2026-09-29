@@ -1,3 +1,6 @@
+
+import javax.swing.JOptionPane;
+
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
@@ -37,6 +40,8 @@ public class EditorGUI extends javax.swing.JFrame {
         jScrollPane3 = new javax.swing.JScrollPane();
         editor = new EditorModel();
         ignoreCaseCheckBox = new javax.swing.JCheckBox();
+        replaceTermTextField = new javax.swing.JTextField();
+        performReplaceButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -53,6 +58,9 @@ public class EditorGUI extends javax.swing.JFrame {
         });
 
         performSearchButton.setText("Suchen");
+        performSearchButton.setMaximumSize(new java.awt.Dimension(82, 22));
+        performSearchButton.setMinimumSize(new java.awt.Dimension(82, 22));
+        performSearchButton.setPreferredSize(new java.awt.Dimension(82, 22));
         performSearchButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 performSearchButtonActionPerformed(evt);
@@ -68,6 +76,20 @@ public class EditorGUI extends javax.swing.JFrame {
         ignoreCaseCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 ignoreCaseCheckBoxActionPerformed(evt);
+            }
+        });
+
+        replaceTermTextField.setText("Ersatztext");
+        replaceTermTextField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                replaceTermTextFieldActionPerformed(evt);
+            }
+        });
+
+        performReplaceButton.setText("Ersetzen");
+        performReplaceButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                performReplaceButtonActionPerformed(evt);
             }
         });
 
@@ -89,7 +111,9 @@ public class EditorGUI extends javax.swing.JFrame {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(searchTermTextField)
                             .addComponent(performSearchButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(ignoreCaseCheckBox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addComponent(ignoreCaseCheckBox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(replaceTermTextField)
+                            .addComponent(performReplaceButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -100,9 +124,13 @@ public class EditorGUI extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(searchTermTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(performSearchButton, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(ignoreCaseCheckBox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(ignoreCaseCheckBox))
+                        .addComponent(performSearchButton, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(replaceTermTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(performReplaceButton))
                     .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 289, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addComponent(alertsPaneLabel)
@@ -125,6 +153,14 @@ public class EditorGUI extends javax.swing.JFrame {
     private void performSearchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_performSearchButtonActionPerformed
         performSearch();
     }//GEN-LAST:event_performSearchButtonActionPerformed
+
+    private void replaceTermTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_replaceTermTextFieldActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_replaceTermTextFieldActionPerformed
+
+    private void performReplaceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_performReplaceButtonActionPerformed
+        performReplace();
+    }//GEN-LAST:event_performReplaceButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -158,7 +194,9 @@ public class EditorGUI extends javax.swing.JFrame {
     private javax.swing.JCheckBox ignoreCaseCheckBox;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JButton performReplaceButton;
     private javax.swing.JButton performSearchButton;
+    private javax.swing.JTextField replaceTermTextField;
     private javax.swing.JTextField searchTermTextField;
     // End of variables declaration//GEN-END:variables
 
@@ -167,7 +205,39 @@ public class EditorGUI extends javax.swing.JFrame {
         boolean ignoreCase = ignoreCaseCheckBox.isSelected();
         SearchResult searchResult = editor.find(searchString, ignoreCase);
         
-        alertsTextPane.setText(SearchResultFormatterHelper.formatSearchResult(searchResult));
+        alertsTextPane.setText(ResultFormatterHelper.formatSearchResult(searchResult));
         editor.requestFocus();
+        
+        requestSearchWrapIfNeeded(searchResult);
+    }
+    
+    private void performReplace() {
+        String replaceString = replaceTermTextField.getText();
+        
+        ReplaceResult replaceResult = editor.replace(replaceString);
+        alertsTextPane.setText(ResultFormatterHelper.formatReplaceResult(replaceResult));
+    }
+    
+    private void requestSearchWrapIfNeeded(SearchResult searchResult) {
+        if (searchResult.searchTermFound()) {
+            return;
+        }
+        
+        if (editor.getCaretPosition() <= 0) {
+            return;
+        }
+        
+        int userOptionChoice = JOptionPane.showConfirmDialog(
+                rootPane,
+                "Von Anfang an suchen?",
+                "Keine Treffer",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+        );
+        
+        if (userOptionChoice == JOptionPane.YES_OPTION) {
+            editor.setCaretPosition(0);
+            performSearch();
+        }
     }
 }
