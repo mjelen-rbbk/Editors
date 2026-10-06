@@ -1,5 +1,6 @@
 
 import javax.swing.JOptionPane;
+import javax.swing.event.CaretEvent;
 
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
@@ -36,12 +37,25 @@ public class EditorGUI extends javax.swing.JFrame {
         jScrollPane2 = new javax.swing.JScrollPane();
         alertsTextPane = new javax.swing.JTextPane();
         searchTermTextField = new javax.swing.JTextField();
-        performSearchButton = new javax.swing.JButton();
         jScrollPane3 = new javax.swing.JScrollPane();
         editor = new EditorModel();
         ignoreCaseCheckBox = new javax.swing.JCheckBox();
         replaceTermTextField = new javax.swing.JTextField();
         performReplaceButton = new javax.swing.JButton();
+        performSearchButton = new javax.swing.JButton();
+        lineFormattedTextField = new javax.swing.JFormattedTextField();
+        lineInputLabel = new javax.swing.JLabel();
+        columnInputLabel = new javax.swing.JLabel();
+        columnFormattedTextField = new javax.swing.JFormattedTextField();
+        charInputLabel = new javax.swing.JLabel();
+        charFormattedTextField = new javax.swing.JFormattedTextField();
+        jMenuBar1 = new javax.swing.JMenuBar();
+        fileMenu = new javax.swing.JMenu();
+        closeFileMenuItem = new javax.swing.JMenuItem();
+        editMenu = new javax.swing.JMenu();
+        searchEditMenuItem = new javax.swing.JMenuItem();
+        helpMenu = new javax.swing.JMenu();
+        infoHelpMenuItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -57,19 +71,14 @@ public class EditorGUI extends javax.swing.JFrame {
             }
         });
 
-        performSearchButton.setText("Suchen");
-        performSearchButton.setMaximumSize(new java.awt.Dimension(82, 22));
-        performSearchButton.setMinimumSize(new java.awt.Dimension(82, 22));
-        performSearchButton.setPreferredSize(new java.awt.Dimension(82, 22));
-        performSearchButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                performSearchButtonActionPerformed(evt);
-            }
-        });
-
         editor.setColumns(20);
         editor.setRows(5);
         editor.setText("Hier wird an mehrzeiligen Texten gearbeitet.\nWenn man \"Suchtext\" im Textelf an der Seite eingibt\nund den Button \"Suchen\" betätigt, dann soll Suchtext gefunden werden.\n\nSuChTeXt wird nur gefunden, wenn Großschreibung ignoriert wird.");
+        editor.addCaretListener(new javax.swing.event.CaretListener() {
+            public void caretUpdate(javax.swing.event.CaretEvent evt) {
+                editorCaretUpdate(evt);
+            }
+        });
         jScrollPane3.setViewportView(editor);
 
         ignoreCaseCheckBox.setText("Groß- und Kleinschreibung ignorieren");
@@ -93,6 +102,73 @@ public class EditorGUI extends javax.swing.JFrame {
             }
         });
 
+        performSearchButton.setText("Suchen");
+        performSearchButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                performSearchButtonActionPerformed(evt);
+            }
+        });
+
+        lineFormattedTextField.setText("0");
+
+        lineInputLabel.setText("Zeile:");
+
+        columnInputLabel.setText("Spalte:");
+
+        columnFormattedTextField.setText("0");
+        columnFormattedTextField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                columnFormattedTextFieldActionPerformed(evt);
+            }
+        });
+
+        charInputLabel.setText("Zeichen:");
+
+        charFormattedTextField.setText("0");
+        charFormattedTextField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                charFormattedTextFieldActionPerformed(evt);
+            }
+        });
+
+        fileMenu.setText("Datei");
+
+        closeFileMenuItem.setText("Beenden");
+        closeFileMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                closeFileMenuItemActionPerformed(evt);
+            }
+        });
+        fileMenu.add(closeFileMenuItem);
+
+        jMenuBar1.add(fileMenu);
+
+        editMenu.setText("Bearbeiten");
+
+        searchEditMenuItem.setText("Suchen");
+        searchEditMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                searchEditMenuItemActionPerformed(evt);
+            }
+        });
+        editMenu.add(searchEditMenuItem);
+
+        jMenuBar1.add(editMenu);
+
+        helpMenu.setText("Hilfe");
+
+        infoHelpMenuItem.setText("Info");
+        infoHelpMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                infoHelpMenuItemActionPerformed(evt);
+            }
+        });
+        helpMenu.add(infoHelpMenuItem);
+
+        jMenuBar1.add(helpMenu);
+
+        setJMenuBar(jMenuBar1);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -101,42 +177,67 @@ public class EditorGUI extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(alertsPaneLabel)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 588, Short.MAX_VALUE)
-                            .addComponent(jScrollPane3))
-                        .addGap(34, 34, 34)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 588, Short.MAX_VALUE)
+                                .addGap(34, 34, 34))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(alertsPaneLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(searchTermTextField)
-                            .addComponent(performSearchButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(ignoreCaseCheckBox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(replaceTermTextField)
-                            .addComponent(performReplaceButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addComponent(performReplaceButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(performSearchButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(jScrollPane3)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lineInputLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lineFormattedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(columnInputLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(columnFormattedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(charInputLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(charFormattedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 289, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(7, 7, 7)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lineInputLabel)
+                    .addComponent(lineFormattedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(columnInputLabel)
+                        .addComponent(columnFormattedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(charInputLabel)
+                            .addComponent(charFormattedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(searchTermTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(ignoreCaseCheckBox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(performSearchButton, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(performSearchButton)
                         .addGap(18, 18, 18)
                         .addComponent(replaceTermTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(performReplaceButton))
-                    .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 289, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addComponent(alertsPaneLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 86, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(alertsPaneLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 124, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(0, 0, Short.MAX_VALUE))
         );
 
         pack();
@@ -150,10 +251,6 @@ public class EditorGUI extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_ignoreCaseCheckBoxActionPerformed
 
-    private void performSearchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_performSearchButtonActionPerformed
-        performSearch();
-    }//GEN-LAST:event_performSearchButtonActionPerformed
-
     private void replaceTermTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_replaceTermTextFieldActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_replaceTermTextFieldActionPerformed
@@ -161,6 +258,34 @@ public class EditorGUI extends javax.swing.JFrame {
     private void performReplaceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_performReplaceButtonActionPerformed
         performReplace();
     }//GEN-LAST:event_performReplaceButtonActionPerformed
+
+    private void performSearchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_performSearchButtonActionPerformed
+        performSearch();
+    }//GEN-LAST:event_performSearchButtonActionPerformed
+
+    private void columnFormattedTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_columnFormattedTextFieldActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_columnFormattedTextFieldActionPerformed
+
+    private void charFormattedTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_charFormattedTextFieldActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_charFormattedTextFieldActionPerformed
+
+    private void editorCaretUpdate(javax.swing.event.CaretEvent evt) {//GEN-FIRST:event_editorCaretUpdate
+        updateCaretInformation(evt);
+    }//GEN-LAST:event_editorCaretUpdate
+
+    private void closeFileMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeFileMenuItemActionPerformed
+        System.exit(0);
+    }//GEN-LAST:event_closeFileMenuItemActionPerformed
+
+    private void searchEditMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchEditMenuItemActionPerformed
+        performSearch();
+    }//GEN-LAST:event_searchEditMenuItemActionPerformed
+
+    private void infoHelpMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_infoHelpMenuItemActionPerformed
+        showInfoDialog();
+    }//GEN-LAST:event_infoHelpMenuItemActionPerformed
 
     /**
      * @param args the command line arguments
@@ -190,13 +315,26 @@ public class EditorGUI extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel alertsPaneLabel;
     private javax.swing.JTextPane alertsTextPane;
+    private javax.swing.JFormattedTextField charFormattedTextField;
+    private javax.swing.JLabel charInputLabel;
+    private javax.swing.JMenuItem closeFileMenuItem;
+    private javax.swing.JFormattedTextField columnFormattedTextField;
+    private javax.swing.JLabel columnInputLabel;
+    private javax.swing.JMenu editMenu;
     private EditorModel editor;
+    private javax.swing.JMenu fileMenu;
+    private javax.swing.JMenu helpMenu;
     private javax.swing.JCheckBox ignoreCaseCheckBox;
+    private javax.swing.JMenuItem infoHelpMenuItem;
+    private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JFormattedTextField lineFormattedTextField;
+    private javax.swing.JLabel lineInputLabel;
     private javax.swing.JButton performReplaceButton;
     private javax.swing.JButton performSearchButton;
     private javax.swing.JTextField replaceTermTextField;
+    private javax.swing.JMenuItem searchEditMenuItem;
     private javax.swing.JTextField searchTermTextField;
     // End of variables declaration//GEN-END:variables
 
@@ -218,6 +356,45 @@ public class EditorGUI extends javax.swing.JFrame {
         alertsTextPane.setText(ResultFormatterHelper.formatReplaceResult(replaceResult));
     }
     
+    private void updateCaretInformation(CaretEvent e) {
+        int position = e.getDot();
+        int line = 0;
+        int column = 0;
+        
+        try {
+            line = editor.getLineOfOffset(position) + 1;
+            
+            if (position != 0) {
+                column = position - editor.getLineStartOffset(line - 1);
+            }
+        } catch (Exception ignored) {
+        }
+        
+        lineFormattedTextField.setValue(line);
+        columnFormattedTextField.setValue(column);
+        charFormattedTextField.setValue(position);
+    }
+    
+    private void showInfoDialog() {
+        String infoDialogHtml = """
+                                <html>
+                                    <h1>
+                                        Editor
+                                    </h1>
+                                    <p>
+                                        Ein Editor mit Menü und Positionsanzeige.
+                                    </p>
+                                </html>
+                                """;
+        
+        JOptionPane.showMessageDialog(
+            this,
+            infoDialogHtml,
+            "Info",
+            JOptionPane.INFORMATION_MESSAGE
+        );
+    }
+    
     private void requestSearchWrapIfNeeded(SearchResult searchResult) {
         if (searchResult.searchTermFound()) {
             return;
@@ -228,7 +405,7 @@ public class EditorGUI extends javax.swing.JFrame {
         }
         
         int userOptionChoice = JOptionPane.showConfirmDialog(
-                rootPane,
+                this,
                 "Von Anfang an suchen?",
                 "Keine Treffer",
                 JOptionPane.YES_NO_OPTION,
