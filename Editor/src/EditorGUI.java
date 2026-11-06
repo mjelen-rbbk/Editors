@@ -432,6 +432,12 @@ public class EditorGUI extends javax.swing.JFrame {
                                     <p>
                                         Ein Editor mit Menü und Positionsanzeige.
                                     </p>
+                                    <p>
+                                        <b>© 2026 – Michael Jelen – ITO11</b>
+                                    </p>
+                                    <p>
+                                        Individuelle Zusatzfunktion: wird in Meilenstein 05 ergänzt.
+                                    </p>
                                 </html>
                                 """;
         
