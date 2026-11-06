@@ -1,6 +1,17 @@
 
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import javax.swing.JFileChooser;
+import javax.swing.KeyStroke;
 import javax.swing.JOptionPane;
 import javax.swing.event.CaretEvent;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
@@ -20,8 +31,14 @@ public class EditorGUI extends javax.swing.JFrame {
      */
     public EditorGUI() {
         initComponents();
-        
-        editor.setCaretPosition(0);
+
+        configureFileHandling();
+        editor.addPropertyChangeListener(
+                EditorModel.DIRTY_PROPERTY,
+                event -> updateWindowTitle()
+        );
+        editor.newDocument();
+        updateWindowTitle();
     }
 
     /**
@@ -52,6 +69,7 @@ public class EditorGUI extends javax.swing.JFrame {
         jMenuBar1 = new javax.swing.JMenuBar();
         fileMenu = new javax.swing.JMenu();
         newFileMenuItem = new javax.swing.JMenuItem();
+        openFileMenuItem = new javax.swing.JMenuItem();
         saveFileMenuItem = new javax.swing.JMenuItem();
         saveAsFileMenuItem = new javax.swing.JMenuItem();
         closeFileMenuItem = new javax.swing.JMenuItem();
@@ -60,7 +78,7 @@ public class EditorGUI extends javax.swing.JFrame {
         helpMenu = new javax.swing.JMenu();
         infoHelpMenuItem = new javax.swing.JMenuItem();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
 
         alertsPaneLabel.setText("Meldungen");
 
@@ -145,6 +163,14 @@ public class EditorGUI extends javax.swing.JFrame {
             }
         });
         fileMenu.add(newFileMenuItem);
+
+        openFileMenuItem.setText("Öffnen");
+        openFileMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                openFileMenuItemActionPerformed(evt);
+            }
+        });
+        fileMenu.add(openFileMenuItem);
 
         saveFileMenuItem.setText("Speichern");
         saveFileMenuItem.addActionListener(new java.awt.event.ActionListener() {
@@ -309,7 +335,7 @@ public class EditorGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_editorCaretUpdate
 
     private void closeFileMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeFileMenuItemActionPerformed
-        System.exit(0);
+        requestClose();
     }//GEN-LAST:event_closeFileMenuItemActionPerformed
 
     private void searchEditMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchEditMenuItemActionPerformed
@@ -321,16 +347,20 @@ public class EditorGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_infoHelpMenuItemActionPerformed
 
     private void newFileMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newFileMenuItemActionPerformed
-        // TODO add your handling code here:
+        createNewDocument();
     }//GEN-LAST:event_newFileMenuItemActionPerformed
 
     private void saveFileMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveFileMenuItemActionPerformed
-        // TODO add your handling code here:
+        saveDocument();
     }//GEN-LAST:event_saveFileMenuItemActionPerformed
 
     private void saveAsFileMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveAsFileMenuItemActionPerformed
-        // TODO add your handling code here:
+        saveDocumentAs();
     }//GEN-LAST:event_saveAsFileMenuItemActionPerformed
+
+    private void openFileMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openFileMenuItemActionPerformed
+        openDocument();
+    }//GEN-LAST:event_openFileMenuItemActionPerformed
 
     /**
      * @param args the command line arguments
@@ -377,6 +407,7 @@ public class EditorGUI extends javax.swing.JFrame {
     private javax.swing.JFormattedTextField lineFormattedTextField;
     private javax.swing.JLabel lineInputLabel;
     private javax.swing.JMenuItem newFileMenuItem;
+    private javax.swing.JMenuItem openFileMenuItem;
     private javax.swing.JButton performReplaceButton;
     private javax.swing.JButton performSearchButton;
     private javax.swing.JTextField replaceTermTextField;
@@ -470,5 +501,217 @@ public class EditorGUI extends javax.swing.JFrame {
             editor.setCaretPosition(0);
             performSearch();
         }
+    }
+
+    private void configureFileHandling() {
+        openFileMenuItem.setAccelerator(KeyStroke.getKeyStroke(
+                KeyEvent.VK_O,
+                InputEvent.CTRL_DOWN_MASK
+        ));
+        closeFileMenuItem.setAccelerator(KeyStroke.getKeyStroke(
+                KeyEvent.VK_X,
+                InputEvent.ALT_DOWN_MASK
+        ));
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent event) {
+                requestClose();
+            }
+        });
+    }
+
+    private void createNewDocument() {
+        if (!confirmDiscardOrSaveChanges()) {
+            return;
+        }
+
+        editor.newDocument();
+        alertsTextPane.setText("Neues Dokument erstellt.");
+        updateWindowTitle();
+        editor.requestFocusInWindow();
+    }
+
+    private void openDocument() {
+        JFileChooser chooser = createOpenFileChooser();
+        if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        if (!confirmDiscardOrSaveChanges()) {
+            return;
+        }
+
+        Path selectedPath = chooser.getSelectedFile().toPath();
+        try {
+            EditorModel.LoadResult result = editor.load(selectedPath);
+            alertsTextPane.setText(String.format(
+                    "Datei '%s' geladen: %d Zeichen, %d Byte.",
+                    editor.getFilePath().getFileName(),
+                    result.characterCount(),
+                    result.byteCount()
+            ));
+            updateWindowTitle();
+            editor.requestFocusInWindow();
+        } catch (IOException exception) {
+            showFileError("Laden", exception);
+        }
+    }
+
+    private boolean saveDocument() {
+        if (editor.getFilePath() == null) {
+            return saveDocumentAs();
+        }
+
+        try {
+            editor.save();
+            reportSuccessfulSave();
+            return true;
+        } catch (IOException exception) {
+            showFileError("Speichern", exception);
+            return false;
+        }
+    }
+
+    private boolean saveDocumentAs() {
+        JFileChooser chooser = createSaveFileChooser();
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return false;
+        }
+
+        Path selectedPath = addSelectedExtensionIfMissing(chooser);
+        if (Files.exists(selectedPath) && !confirmOverwrite(selectedPath)) {
+            return false;
+        }
+
+        try {
+            editor.saveAs(selectedPath);
+            reportSuccessfulSave();
+            return true;
+        } catch (IOException exception) {
+            showFileError("Speichern", exception);
+            return false;
+        }
+    }
+
+    private JFileChooser createOpenFileChooser() {
+        JFileChooser chooser = new JFileChooser();
+        FileNameExtensionFilter textFilter = new FileNameExtensionFilter(
+                "Textdateien (*.txt, *.java, *.xml, *.html, *.sql, *.jsp)",
+                "txt", "java", "xml", "html", "sql", "jsp"
+        );
+        chooser.addChoosableFileFilter(textFilter);
+        chooser.setFileFilter(textFilter);
+        return chooser;
+    }
+
+    private JFileChooser createSaveFileChooser() {
+        JFileChooser chooser = new JFileChooser();
+        FileNameExtensionFilter txtFilter = new FileNameExtensionFilter(
+                "Textdatei (*.txt)",
+                "txt"
+        );
+        chooser.addChoosableFileFilter(txtFilter);
+        chooser.addChoosableFileFilter(new FileNameExtensionFilter(
+                "CSV-Datei (*.csv)",
+                "csv"
+        ));
+        chooser.addChoosableFileFilter(new FileNameExtensionFilter(
+                "Java-Quelldatei (*.java)",
+                "java"
+        ));
+        chooser.setFileFilter(txtFilter);
+
+        Path currentPath = editor.getFilePath();
+        chooser.setSelectedFile(currentPath == null
+                ? new File("Unbenannt.txt")
+                : currentPath.toFile());
+        return chooser;
+    }
+
+    private Path addSelectedExtensionIfMissing(JFileChooser chooser) {
+        File selectedFile = chooser.getSelectedFile();
+        String fileName = selectedFile.getName();
+        if (fileName.lastIndexOf('.') > 0
+                || !(chooser.getFileFilter() instanceof FileNameExtensionFilter filter)) {
+            return selectedFile.toPath();
+        }
+
+        String[] extensions = filter.getExtensions();
+        if (extensions.length == 0) {
+            return selectedFile.toPath();
+        }
+
+        return selectedFile.toPath().resolveSibling(fileName + "." + extensions[0]);
+    }
+
+    private boolean confirmOverwrite(Path path) {
+        int choice = JOptionPane.showConfirmDialog(
+                this,
+                "Die Datei '" + path.getFileName() + "' existiert bereits.\n"
+                        + "Soll sie überschrieben werden?",
+                "Datei überschreiben",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+        );
+        return choice == JOptionPane.YES_OPTION;
+    }
+
+    private boolean confirmDiscardOrSaveChanges() {
+        if (!editor.isDirty()) {
+            return true;
+        }
+
+        Object[] options = {"Speichern", "Verwerfen", "Abbrechen"};
+        int choice = JOptionPane.showOptionDialog(
+                this,
+                "Das aktuelle Dokument enthält ungespeicherte Änderungen.",
+                "Änderungen speichern?",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.WARNING_MESSAGE,
+                null,
+                options,
+                options[0]
+        );
+
+        return switch (choice) {
+            case 0 -> saveDocument();
+            case 1 -> true;
+            default -> false;
+        };
+    }
+
+    private void requestClose() {
+        if (confirmDiscardOrSaveChanges()) {
+            dispose();
+        }
+    }
+
+    private void reportSuccessfulSave() {
+        alertsTextPane.setText("Datei '" + editor.getFilePath().getFileName()
+                + "' gespeichert.");
+        updateWindowTitle();
+    }
+
+    private void showFileError(String action, IOException exception) {
+        String detail = exception.getMessage() == null
+                ? exception.getClass().getSimpleName()
+                : exception.getMessage();
+        String message = action + " fehlgeschlagen:\n" + detail;
+        alertsTextPane.setText(message);
+        JOptionPane.showMessageDialog(
+                this,
+                message,
+                "Dateifehler",
+                JOptionPane.ERROR_MESSAGE
+        );
+    }
+
+    private void updateWindowTitle() {
+        String fileName = editor.getFilePath() == null
+                ? "Unbenannt"
+                : editor.getFilePath().getFileName().toString();
+        String dirtyMarker = editor.isDirty() ? "*" : "";
+        setTitle(dirtyMarker + fileName + " – Editor");
     }
 }
