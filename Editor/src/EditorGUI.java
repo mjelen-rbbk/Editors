@@ -172,6 +172,7 @@ public class EditorGUI extends javax.swing.JFrame {
 
         jMenuBar1.add(fileMenu);
 
+        editMenu.setMnemonic('B');
         editMenu.setText("Bearbeiten");
 
         searchEditMenuItem.setText("Suchen");
@@ -184,6 +185,7 @@ public class EditorGUI extends javax.swing.JFrame {
 
         jMenuBar1.add(editMenu);
 
+        helpMenu.setMnemonic('H');
         helpMenu.setText("Hilfe");
 
         infoHelpMenuItem.setText("Info");

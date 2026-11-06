@@ -46,6 +46,7 @@
         </Menu>
         <Menu class="javax.swing.JMenu" name="editMenu">
           <Properties>
+            <Property name="mnemonic" type="int" value="66"/>
             <Property name="text" type="java.lang.String" value="Bearbeiten"/>
           </Properties>
           <SubComponents>
@@ -61,6 +62,7 @@
         </Menu>
         <Menu class="javax.swing.JMenu" name="helpMenu">
           <Properties>
+            <Property name="mnemonic" type="int" value="72"/>
             <Property name="text" type="java.lang.String" value="Hilfe"/>
           </Properties>
           <SubComponents>
