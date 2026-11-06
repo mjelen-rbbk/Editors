@@ -7,11 +7,14 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.function.IntConsumer;
+import javax.swing.JFormattedTextField;
 import javax.swing.JFileChooser;
 import javax.swing.KeyStroke;
 import javax.swing.JOptionPane;
 import javax.swing.event.CaretEvent;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.text.BadLocationException;
 
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
@@ -85,6 +88,9 @@ public class EditorGUI extends javax.swing.JFrame {
         alertsPaneLabel.setText("Meldungen");
 
         alertsTextPane.setEditable(false);
+        alertsTextPane.setBackground(new java.awt.Color(60, 63, 65));
+        alertsTextPane.setFont(new java.awt.Font("SansSerif", 0, 12)); // NOI18N
+        alertsTextPane.setForeground(new java.awt.Color(235, 235, 235));
         jScrollPane2.setViewportView(alertsTextPane);
 
         searchTermTextField.setText("Suchtext");
@@ -97,7 +103,7 @@ public class EditorGUI extends javax.swing.JFrame {
         editor.setColumns(20);
         editor.setRows(5);
         editor.setText("Hier wird an mehrzeiligen Texten gearbeitet.\nWenn man \"Suchtext\" im Textelf an der Seite eingibt\nund den Button \"Suchen\" betätigt, dann soll Suchtext gefunden werden.\n\nSuChTeXt wird nur gefunden, wenn Großschreibung ignoriert wird.");
-        editor.setFont(new java.awt.Font("Noto Sans Mono", 0, 16)); // NOI18N
+        editor.setFont(new java.awt.Font("Monospaced", 0, 16)); // NOI18N
         editor.addCaretListener(new javax.swing.event.CaretListener() {
             public void caretUpdate(javax.swing.event.CaretEvent evt) {
                 editorCaretUpdate(evt);
@@ -133,22 +139,30 @@ public class EditorGUI extends javax.swing.JFrame {
             }
         });
 
-        lineFormattedTextField.setText("0");
+        lineFormattedTextField.setText("1");
+        lineFormattedTextField.setToolTipText("1-basierte Zeilennummer; Enter bewegt den Cursor zum Zeilenanfang.");
+        lineFormattedTextField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                lineFormattedTextFieldActionPerformed(evt);
+            }
+        });
 
-        lineInputLabel.setText("Zeile:");
+        lineInputLabel.setText("Zeile (ab 1):");
 
-        columnInputLabel.setText("Spalte:");
+        columnInputLabel.setText("Spalte (ab 0):");
 
         columnFormattedTextField.setText("0");
+        columnFormattedTextField.setToolTipText("0-basierte Spalte in der aktuellen Zeile; Enter bewegt den Cursor.");
         columnFormattedTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 columnFormattedTextFieldActionPerformed(evt);
             }
         });
 
-        charInputLabel.setText("Zeichen:");
+        charInputLabel.setText("Zeichen (ab 0):");
 
         charFormattedTextField.setText("0");
+        charFormattedTextField.setToolTipText("0-basierter absoluter Zeichenoffset; Enter bewegt den Cursor.");
         charFormattedTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 charFormattedTextFieldActionPerformed(evt);
@@ -277,7 +291,7 @@ public class EditorGUI extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 289, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 289, Short.MAX_VALUE)
                 .addGap(7, 7, 7)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -305,7 +319,7 @@ public class EditorGUI extends javax.swing.JFrame {
                         .addComponent(alertsPaneLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 124, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addGap(0, 0, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         pack();
@@ -332,11 +346,19 @@ public class EditorGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_performSearchButtonActionPerformed
 
     private void columnFormattedTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_columnFormattedTextFieldActionPerformed
-        // TODO add your handling code here:
+        navigateFromField(
+                columnFormattedTextField,
+                "Spalte",
+                editor::moveCaretToColumn
+        );
     }//GEN-LAST:event_columnFormattedTextFieldActionPerformed
 
     private void charFormattedTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_charFormattedTextFieldActionPerformed
-        // TODO add your handling code here:
+        navigateFromField(
+                charFormattedTextField,
+                "Zeichenposition",
+                editor::moveCaretToOffset
+        );
     }//GEN-LAST:event_charFormattedTextFieldActionPerformed
 
     private void editorCaretUpdate(javax.swing.event.CaretEvent evt) {//GEN-FIRST:event_editorCaretUpdate
@@ -374,6 +396,14 @@ public class EditorGUI extends javax.swing.JFrame {
     private void replaceAllEditMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_replaceAllEditMenuItemActionPerformed
         performReplaceAll();
     }//GEN-LAST:event_replaceAllEditMenuItemActionPerformed
+
+    private void lineFormattedTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lineFormattedTextFieldActionPerformed
+        navigateFromField(
+                lineFormattedTextField,
+                "Zeile",
+                editor::moveCaretToLine
+        );
+    }//GEN-LAST:event_lineFormattedTextFieldActionPerformed
 
     /**
      * @param args the command line arguments
@@ -490,22 +520,54 @@ public class EditorGUI extends javax.swing.JFrame {
     }
     
     private void updateCaretInformation(CaretEvent e) {
-        int position = e.getDot();
-        int line = 0;
-        int column = 0;
-        
+        updateCaretInformation(e.getDot());
+    }
+
+    private void updateCaretInformation(int position) {
         try {
-            line = editor.getLineOfOffset(position) + 1;
-            
-            if (position != 0) {
-                column = position - editor.getLineStartOffset(line - 1);
-            }
-        } catch (Exception ignored) {
+            int zeroBasedLine = editor.getLineOfOffset(position);
+            int line = zeroBasedLine + 1;
+            int column = position - editor.getLineStartOffset(zeroBasedLine);
+
+            lineFormattedTextField.setValue(line);
+            columnFormattedTextField.setValue(column);
+            charFormattedTextField.setValue(position);
+        } catch (BadLocationException exception) {
+            logger.log(
+                    java.util.logging.Level.WARNING,
+                    "Cursorposition konnte nicht aktualisiert werden.",
+                    exception
+            );
         }
-        
-        lineFormattedTextField.setValue(line);
-        columnFormattedTextField.setValue(column);
-        charFormattedTextField.setValue(position);
+    }
+
+    private void navigateFromField(
+            JFormattedTextField sourceField,
+            String positionName,
+            IntConsumer navigation
+    ) {
+        try {
+            int requestedPosition = Integer.parseInt(sourceField.getText().trim());
+            navigation.accept(requestedPosition);
+            alertsTextPane.setText(
+                    "Cursor zu " + positionName + " " + requestedPosition + " bewegt."
+            );
+            editor.requestFocusInWindow();
+        } catch (NumberFormatException exception) {
+            reportNavigationError(
+                    sourceField,
+                    positionName + " muss als ganze Zahl eingegeben werden."
+            );
+        } catch (IllegalArgumentException exception) {
+            reportNavigationError(sourceField, exception.getMessage());
+        }
+    }
+
+    private void reportNavigationError(JFormattedTextField sourceField, String message) {
+        alertsTextPane.setText(message);
+        updateCaretInformation(editor.getCaretPosition());
+        sourceField.requestFocusInWindow();
+        sourceField.selectAll();
     }
     
     private void showInfoDialog() {

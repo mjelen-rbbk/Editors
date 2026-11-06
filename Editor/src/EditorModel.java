@@ -1,4 +1,11 @@
 
+import java.awt.Color;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -7,6 +14,7 @@ import java.util.Objects;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.JTextArea;
+import javax.swing.text.BadLocationException;
 
 /**
  * Fachlogik fuer einen Texteditor. Unabhaengig von GUI und Controller. Nicht
@@ -17,6 +25,8 @@ import javax.swing.JTextArea;
  */
 public class EditorModel extends JTextArea {
     public static final String DIRTY_PROPERTY = "dirty";
+    private static final int GUIDE_COLUMN = 60;
+    private static final String GUIDE_WIDTH_TEXT = "0".repeat(GUIDE_COLUMN);
 
     private int findPosition = -1;
     private Path filePath;
@@ -47,6 +57,60 @@ public class EditorModel extends JTextArea {
 
     public boolean isDirty() {
         return dirty;
+    }
+
+    public void moveCaretToOffset(int offset) {
+        int documentLength = getDocument().getLength();
+        if (offset < 0 || offset > documentLength) {
+            throw new IllegalArgumentException(
+                    "Die Zeichenposition muss zwischen 0 und " + documentLength + " liegen."
+            );
+        }
+        setCaretPosition(offset);
+    }
+
+    public void moveCaretToLine(int oneBasedLine) {
+        int lineCount = getLineCount();
+        if (oneBasedLine < 1 || oneBasedLine > lineCount) {
+            throw new IllegalArgumentException(
+                    "Die Zeile muss zwischen 1 und " + lineCount + " liegen."
+            );
+        }
+
+        try {
+            setCaretPosition(getLineStartOffset(oneBasedLine - 1));
+        } catch (BadLocationException exception) {
+            throw new IllegalStateException("Die Zeilenposition konnte nicht ermittelt werden.", exception);
+        }
+    }
+
+    public void moveCaretToColumn(int zeroBasedColumn) {
+        if (zeroBasedColumn < 0) {
+            throw new IllegalArgumentException("Die Spalte darf nicht negativ sein.");
+        }
+
+        try {
+            int line = getLineOfOffset(getCaretPosition());
+            int lineStart = getLineStartOffset(line);
+            int lineEnd = getLineEndOffset(line);
+            if (lineEnd > lineStart && "\n".equals(getText(lineEnd - 1, 1))) {
+                lineEnd--;
+            }
+            if (lineEnd > lineStart && "\r".equals(getText(lineEnd - 1, 1))) {
+                lineEnd--;
+            }
+
+            int maximumColumn = lineEnd - lineStart;
+            if (zeroBasedColumn > maximumColumn) {
+                throw new IllegalArgumentException(
+                        "Die Spalte muss in dieser Zeile zwischen 0 und "
+                                + maximumColumn + " liegen."
+                );
+            }
+            setCaretPosition(lineStart + zeroBasedColumn);
+        } catch (BadLocationException exception) {
+            throw new IllegalStateException("Die Spaltenposition konnte nicht ermittelt werden.", exception);
+        }
     }
 
     public void newDocument() {
@@ -195,6 +259,45 @@ public class EditorModel extends JTextArea {
             }
         }
         return -1;
+    }
+
+    @Override
+    protected void paintComponent(Graphics graphics) {
+        super.paintComponent(graphics);
+
+        Graphics2D guideGraphics = (Graphics2D) graphics.create();
+        try {
+            FontMetrics metrics = getFontMetrics(getFont());
+            Insets insets = getInsets();
+            double textStartX = insets.left;
+            try {
+                Rectangle2D firstCharacterBounds = modelToView2D(0);
+                if (firstCharacterBounds != null) {
+                    textStartX = firstCharacterBounds.getX();
+                }
+            } catch (BadLocationException ignored) {
+                // Position 0 kann nur während eines Dokumentwechsels kurzzeitig fehlen.
+            }
+            int guideX = (int) Math.round(
+                    textStartX + metrics.stringWidth(GUIDE_WIDTH_TEXT)
+            );
+            Rectangle visibleArea = getVisibleRect();
+            Color foreground = getForeground();
+            guideGraphics.setColor(new Color(
+                    foreground.getRed(),
+                    foreground.getGreen(),
+                    foreground.getBlue(),
+                    90
+            ));
+            guideGraphics.drawLine(
+                    guideX,
+                    visibleArea.y,
+                    guideX,
+                    visibleArea.y + visibleArea.height
+            );
+        } finally {
+            guideGraphics.dispose();
+        }
     }
 
     public record LoadResult(int characterCount, long byteCount) {
