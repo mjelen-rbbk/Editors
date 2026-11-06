@@ -51,6 +51,9 @@ public class EditorGUI extends javax.swing.JFrame {
         charFormattedTextField = new javax.swing.JFormattedTextField();
         jMenuBar1 = new javax.swing.JMenuBar();
         fileMenu = new javax.swing.JMenu();
+        newFileMenuItem = new javax.swing.JMenuItem();
+        saveFileMenuItem = new javax.swing.JMenuItem();
+        saveAsFileMenuItem = new javax.swing.JMenuItem();
         closeFileMenuItem = new javax.swing.JMenuItem();
         editMenu = new javax.swing.JMenu();
         searchEditMenuItem = new javax.swing.JMenuItem();
@@ -74,6 +77,7 @@ public class EditorGUI extends javax.swing.JFrame {
         editor.setColumns(20);
         editor.setRows(5);
         editor.setText("Hier wird an mehrzeiligen Texten gearbeitet.\nWenn man \"Suchtext\" im Textelf an der Seite eingibt\nund den Button \"Suchen\" betätigt, dann soll Suchtext gefunden werden.\n\nSuChTeXt wird nur gefunden, wenn Großschreibung ignoriert wird.");
+        editor.setFont(new java.awt.Font("Noto Sans Mono", 0, 16)); // NOI18N
         editor.addCaretListener(new javax.swing.event.CaretListener() {
             public void caretUpdate(javax.swing.event.CaretEvent evt) {
                 editorCaretUpdate(evt);
@@ -131,7 +135,32 @@ public class EditorGUI extends javax.swing.JFrame {
             }
         });
 
+        fileMenu.setMnemonic('D');
         fileMenu.setText("Datei");
+
+        newFileMenuItem.setText("Neu");
+        newFileMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                newFileMenuItemActionPerformed(evt);
+            }
+        });
+        fileMenu.add(newFileMenuItem);
+
+        saveFileMenuItem.setText("Speichern");
+        saveFileMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveFileMenuItemActionPerformed(evt);
+            }
+        });
+        fileMenu.add(saveFileMenuItem);
+
+        saveAsFileMenuItem.setText("Speichern unter");
+        saveAsFileMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveAsFileMenuItemActionPerformed(evt);
+            }
+        });
+        fileMenu.add(saveAsFileMenuItem);
 
         closeFileMenuItem.setText("Beenden");
         closeFileMenuItem.addActionListener(new java.awt.event.ActionListener() {
@@ -212,15 +241,16 @@ public class EditorGUI extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 289, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(7, 7, 7)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lineInputLabel)
-                    .addComponent(lineFormattedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(charInputLabel)
+                        .addComponent(charFormattedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(columnInputLabel)
-                        .addComponent(columnFormattedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(charInputLabel)
-                            .addComponent(charFormattedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addComponent(columnFormattedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(lineInputLabel)
+                        .addComponent(lineFormattedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
@@ -257,6 +287,7 @@ public class EditorGUI extends javax.swing.JFrame {
 
     private void performReplaceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_performReplaceButtonActionPerformed
         performReplace();
+        performSearch();
     }//GEN-LAST:event_performReplaceButtonActionPerformed
 
     private void performSearchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_performSearchButtonActionPerformed
@@ -286,6 +317,18 @@ public class EditorGUI extends javax.swing.JFrame {
     private void infoHelpMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_infoHelpMenuItemActionPerformed
         showInfoDialog();
     }//GEN-LAST:event_infoHelpMenuItemActionPerformed
+
+    private void newFileMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newFileMenuItemActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_newFileMenuItemActionPerformed
+
+    private void saveFileMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveFileMenuItemActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_saveFileMenuItemActionPerformed
+
+    private void saveAsFileMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveAsFileMenuItemActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_saveAsFileMenuItemActionPerformed
 
     /**
      * @param args the command line arguments
@@ -331,9 +374,12 @@ public class EditorGUI extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JFormattedTextField lineFormattedTextField;
     private javax.swing.JLabel lineInputLabel;
+    private javax.swing.JMenuItem newFileMenuItem;
     private javax.swing.JButton performReplaceButton;
     private javax.swing.JButton performSearchButton;
     private javax.swing.JTextField replaceTermTextField;
+    private javax.swing.JMenuItem saveAsFileMenuItem;
+    private javax.swing.JMenuItem saveFileMenuItem;
     private javax.swing.JMenuItem searchEditMenuItem;
     private javax.swing.JTextField searchTermTextField;
     // End of variables declaration//GEN-END:variables
