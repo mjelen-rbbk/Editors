@@ -23,9 +23,14 @@ import java.util.concurrent.CancellationException;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.JTextArea;
+import javax.swing.plaf.basic.BasicTextAreaUI;
+import javax.swing.plaf.synth.SynthTextAreaUI;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.PlainDocument;
+import javax.swing.text.Element;
+import javax.swing.text.PlainView;
+import javax.swing.text.View;
 
 /**
  * Fachlogik fuer einen Texteditor. Unabhaengig von GUI und Controller. Nicht
@@ -43,6 +48,31 @@ public class EditorModel extends JTextArea {
     private Path filePath;
     private boolean dirty;
     private Integer preparedWordCount;
+
+    @Override
+    public void updateUI() {
+        super.updateUI();
+        if (getUI() instanceof SynthTextAreaUI) {
+            setUI(new SynthTextAreaUI() {
+                @Override
+                public View create(Element element) {
+                    return deferWidthCalculation(super.create(element), element);
+                }
+            });
+        } else if (getUI().getClass() == BasicTextAreaUI.class) {
+            setUI(new BasicTextAreaUI() {
+                @Override
+                public View create(Element element) {
+                    return deferWidthCalculation(super.create(element), element);
+                }
+            });
+        }
+    }
+
+    private static View deferWidthCalculation(View defaultView, Element element) {
+        return defaultView instanceof PlainView
+                ? new DeferredWidthPlainView(element) : defaultView;
+    }
 
     public EditorModel() {
         DocumentListener dirtyListener = new DocumentListener() {
@@ -88,6 +118,11 @@ public class EditorModel extends JTextArea {
 
     public static int countWords(String text) {
         return countWords(text, false);
+    }
+
+    public static int countWordsInterruptibly(String text) {
+        checkLoadCancelled();
+        return countWords(text, true);
     }
 
     private static int countWords(String text, boolean cancellable) {
@@ -151,9 +186,9 @@ public class EditorModel extends JTextArea {
         }
     }
 
-    public void moveCaretToColumn(int zeroBasedColumn) {
-        if (zeroBasedColumn < 0) {
-            throw new IllegalArgumentException("Die Spalte darf nicht negativ sein.");
+    public void moveCaretToColumn(int oneBasedColumn) {
+        if (oneBasedColumn < 1) {
+            throw new IllegalArgumentException("Die Spalte muss mindestens 1 sein.");
         }
 
         try {
@@ -167,14 +202,14 @@ public class EditorModel extends JTextArea {
                 }
             }
 
-            int maximumColumn = lineEnd - lineStart;
-            if (zeroBasedColumn > maximumColumn) {
+            int maximumColumn = lineEnd - lineStart + 1;
+            if (oneBasedColumn > maximumColumn) {
                 throw new IllegalArgumentException(
-                        "Die Spalte muss in dieser Zeile zwischen 0 und "
+                        "Die Spalte muss in dieser Zeile zwischen 1 und "
                                 + maximumColumn + " liegen."
                 );
             }
-            setCaretPosition(lineStart + zeroBasedColumn);
+            setCaretPosition(lineStart + oneBasedColumn - 1);
         } catch (BadLocationException exception) {
             throw new IllegalStateException("Die Spaltenposition konnte nicht ermittelt werden.", exception);
         }

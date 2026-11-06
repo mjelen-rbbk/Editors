@@ -50,6 +50,9 @@ import javax.swing.text.Document;
 public class EditorGUI extends javax.swing.JFrame {
 
     private static final long LARGE_FILE_WARNING_BYTES = 1024 * 1024;
+    private javax.swing.Timer wordCountTimer;
+    private WordCountWorker wordCountWorker;
+    private long statisticsRevision;
 
     private static final String[] SPECIAL_CHARACTERS = {
         "€", "©", "®", "™", "°", "±",
@@ -185,10 +188,10 @@ public class EditorGUI extends javax.swing.JFrame {
 
         lineInputLabel.setText("Zeile (ab 1):");
 
-        columnInputLabel.setText("Spalte (ab 0):");
+        columnInputLabel.setText("Spalte (ab 1):");
 
-        columnFormattedTextField.setText("0");
-        columnFormattedTextField.setToolTipText("0-basierte Spalte in der aktuellen Zeile; Enter bewegt den Cursor.");
+        columnFormattedTextField.setText("1");
+        columnFormattedTextField.setToolTipText("1-basierte Spalte in der aktuellen Zeile; Enter bewegt den Cursor.");
         columnFormattedTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 columnFormattedTextFieldActionPerformed(evt);
@@ -620,7 +623,7 @@ public class EditorGUI extends javax.swing.JFrame {
         try {
             int zeroBasedLine = editor.getLineOfOffset(position);
             int line = zeroBasedLine + 1;
-            int column = position - editor.getLineStartOffset(zeroBasedLine);
+            int column = position - editor.getLineStartOffset(zeroBasedLine) + 1;
 
             lineFormattedTextField.setText(Integer.toString(line));
             columnFormattedTextField.setText(Integer.toString(column));
@@ -690,7 +693,8 @@ public class EditorGUI extends javax.swing.JFrame {
         extraFeatureTitle.setFont(extraFeatureTitle.getFont().deriveFont(Font.BOLD));
         details.add(extraFeatureTitle);
         details.add(Box.createVerticalStrut(8));
-        details.add(new JLabel("Wörter und Zeichen werden während der Eingabe gezählt."));
+        details.add(new JLabel("Zeichen erscheinen sofort; Wörter werden nach einer"));
+        details.add(new JLabel("kurzen Eingabepause im Hintergrund gezählt."));
         details.add(Box.createVerticalStrut(4));
         details.add(new JLabel("Bearbeiten → Textstatistik zeigt weitere Angaben"));
         details.add(new JLabel("zum Dokument und zur aktuellen Auswahl."));
@@ -764,6 +768,8 @@ public class EditorGUI extends javax.swing.JFrame {
     }
 
     private void configureExtras() {
+        wordCountTimer = new javax.swing.Timer(900, event -> startWordCount());
+        wordCountTimer.setRepeats(false);
         specialCharactersEditMenuItem.setAccelerator(KeyStroke.getKeyStroke(
                 KeyEvent.VK_I,
                 InputEvent.CTRL_DOWN_MASK
@@ -797,9 +803,86 @@ public class EditorGUI extends javax.swing.JFrame {
     }
 
     private void updateLiveStatistics() {
+        statisticsRevision++;
+        wordCountTimer.stop();
+        if (wordCountWorker != null) {
+            wordCountWorker.cancel(true);
+            wordCountWorker = null;
+        }
+        if (editor.getCharacterCount() == 0) {
+            statisticsLabel.setText("Statistik: 0 Wörter | 0 Zeichen");
+            return;
+        }
         statisticsLabel.setText(
-                "Statistik: " + editor.getWordCount() + " Wörter | " + editor.getCharacterCount() + " Zeichen"
+                "Wörter werden berechnet … | " + editor.getCharacterCount() + " Zeichen"
         );
+        wordCountTimer.restart();
+    }
+
+    private void startWordCount() {
+        long revision = statisticsRevision;
+        Document document = editor.getDocument();
+        wordCountWorker = new WordCountWorker(document) {
+            @Override
+            protected void done() {
+                if (revision != statisticsRevision || document != editor.getDocument()) {
+                    return;
+                }
+                try {
+                    statisticsLabel.setText("Statistik: " + get()
+                            + " Wörter | " + editor.getCharacterCount() + " Zeichen");
+                } catch (CancellationException exception) {
+                    // Ein neuer Stand wurde bereits zur Berechnung vorgemerkt.
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                } catch (ExecutionException exception) {
+                    statisticsLabel.setText("Wortzahl nicht verfügbar | "
+                            + editor.getCharacterCount() + " Zeichen");
+                    logger.log(java.util.logging.Level.WARNING,
+                            "Wortzahl konnte nicht berechnet werden.", exception.getCause());
+                } finally {
+                    wordCountWorker = null;
+                }
+            }
+        };
+        wordCountWorker.execute();
+    }
+
+    static class WordCountWorker extends SwingWorker<Integer, Void> {
+        private final Document document;
+
+        WordCountWorker(Document document) {
+            this.document = document;
+        }
+
+        @Override
+        protected Integer doInBackground() {
+            String[] snapshot = new String[1];
+            document.render(() -> {
+                if (isCancelled()) {
+                    throw new CancellationException();
+                }
+                try {
+                    snapshot[0] = document.getText(0, document.getLength());
+                } catch (BadLocationException exception) {
+                    throw new IllegalStateException(exception);
+                }
+            });
+            return EditorModel.countWordsInterruptibly(snapshot[0]);
+        }
+    }
+
+    @Override
+    public void dispose() {
+        statisticsRevision++;
+        if (wordCountTimer != null) {
+            wordCountTimer.stop();
+        }
+        if (wordCountWorker != null) {
+            wordCountWorker.cancel(true);
+            wordCountWorker = null;
+        }
+        super.dispose();
     }
 
     private void showStatisticsDialog() {

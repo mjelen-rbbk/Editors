@@ -340,13 +340,13 @@
     </Component>
     <Component class="javax.swing.JLabel" name="columnInputLabel">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Spalte (ab 0):"/>
+        <Property name="text" type="java.lang.String" value="Spalte (ab 1):"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JFormattedTextField" name="columnFormattedTextField">
       <Properties>
-        <Property name="text" type="java.lang.String" value="0"/>
-        <Property name="toolTipText" type="java.lang.String" value="0-basierte Spalte in der aktuellen Zeile; Enter bewegt den Cursor."/>
+        <Property name="text" type="java.lang.String" value="1"/>
+        <Property name="toolTipText" type="java.lang.String" value="1-basierte Spalte in der aktuellen Zeile; Enter bewegt den Cursor."/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="columnFormattedTextFieldActionPerformed"/>
