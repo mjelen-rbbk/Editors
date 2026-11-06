@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.IntConsumer;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CancellationException;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -24,7 +26,9 @@ import javax.swing.JLabel;
 import javax.swing.KeyStroke;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JSeparator;
+import javax.swing.SwingWorker;
 import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.CaretEvent;
@@ -32,6 +36,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
@@ -43,6 +48,8 @@ import javax.swing.text.BadLocationException;
  * @author info
  */
 public class EditorGUI extends javax.swing.JFrame {
+
+    private static final long LARGE_FILE_WARNING_BYTES = 1024 * 1024;
 
     private static final String[] SPECIAL_CHARACTERS = {
         "€", "©", "®", "™", "°", "±",
@@ -615,9 +622,9 @@ public class EditorGUI extends javax.swing.JFrame {
             int line = zeroBasedLine + 1;
             int column = position - editor.getLineStartOffset(zeroBasedLine);
 
-            lineFormattedTextField.setValue(line);
-            columnFormattedTextField.setValue(column);
-            charFormattedTextField.setValue(position);
+            lineFormattedTextField.setText(Integer.toString(line));
+            columnFormattedTextField.setText(Integer.toString(column));
+            charFormattedTextField.setText(Integer.toString(position));
         } catch (BadLocationException exception) {
             logger.log(
                     java.util.logging.Level.WARNING,
@@ -728,6 +735,10 @@ public class EditorGUI extends javax.swing.JFrame {
     }
 
     private void configureFileHandling() {
+        saveFileMenuItem.setAccelerator(KeyStroke.getKeyStroke(
+                KeyEvent.VK_S,
+                InputEvent.CTRL_DOWN_MASK
+        ));
         openFileMenuItem.setAccelerator(KeyStroke.getKeyStroke(
                 KeyEvent.VK_O,
                 InputEvent.CTRL_DOWN_MASK
@@ -758,7 +769,7 @@ public class EditorGUI extends javax.swing.JFrame {
                 InputEvent.CTRL_DOWN_MASK
         ));
 
-        editor.getDocument().addDocumentListener(new DocumentListener() {
+        DocumentListener statisticsListener = new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent event) {
                 updateLiveStatistics();
@@ -773,6 +784,14 @@ public class EditorGUI extends javax.swing.JFrame {
             public void changedUpdate(DocumentEvent event) {
                 updateLiveStatistics();
             }
+        };
+        editor.getDocument().addDocumentListener(statisticsListener);
+        editor.addPropertyChangeListener("document", event -> {
+            ((Document) event.getOldValue()).removeDocumentListener(statisticsListener);
+            Document newDocument = (Document) event.getNewValue();
+            newDocument.removeDocumentListener(statisticsListener);
+            newDocument.addDocumentListener(statisticsListener);
+            updateLiveStatistics();
         });
         updateLiveStatistics();
     }
@@ -860,24 +879,161 @@ public class EditorGUI extends javax.swing.JFrame {
             return;
         }
 
-        if (!confirmDiscardOrSaveChanges()) {
-            return;
-        }
-
         Path selectedPath = chooser.getSelectedFile().toPath();
         try {
-            EditorModel.LoadResult result = editor.load(selectedPath);
-            alertsTextPane.setText(String.format(
-                    "Datei '%s' geladen: %d Zeichen, %d Byte.",
-                    editor.getFilePath().getFileName(),
-                    result.characterCount(),
-                    result.byteCount()
-            ));
-            updateWindowTitle();
-            editor.requestFocusInWindow();
+            long fileSize = Files.size(selectedPath);
+            boolean largeFile = fileSize >= LARGE_FILE_WARNING_BYTES;
+            if (largeFile && JOptionPane.showConfirmDialog(
+                    this,
+                    String.format("Die Datei ist %.1f MiB groß. Das Laden und Anzeigen kann "
+                            + "länger dauern und viel Speicher benötigen.\nTrotzdem öffnen?",
+                            fileSize / (1024.0 * 1024.0)),
+                    "Große Textdatei",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE
+            ) != JOptionPane.YES_OPTION) {
+                return;
+            }
+            if (!confirmDiscardOrSaveChanges()) {
+                return;
+            }
+            if (largeFile) {
+                loadLargeFile(selectedPath);
+            } else {
+                reportSuccessfulLoad(editor.load(selectedPath));
+            }
         } catch (IOException exception) {
             showFileError("Laden", exception);
         }
+    }
+
+    private void loadLargeFile(Path path) {
+        JDialog loadingDialog = new JDialog(this, "Datei wird geladen",
+                Dialog.ModalityType.APPLICATION_MODAL);
+        loadingDialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        JProgressBar progress = new JProgressBar();
+        progress.setIndeterminate(true);
+        progress.setPreferredSize(new Dimension(340, 20));
+        JPanel content = new JPanel(new BorderLayout(0, 12));
+        content.setBorder(new EmptyBorder(16, 16, 16, 16));
+        JLabel message = new JLabel("Datei wird eingelesen. Bitte warten …");
+        content.add(message, BorderLayout.NORTH);
+        content.add(progress, BorderLayout.CENTER);
+        JButton cancelButton = new JButton("Abbrechen");
+        JPanel buttons = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 0, 0));
+        buttons.add(cancelButton);
+        content.add(buttons, BorderLayout.SOUTH);
+        loadingDialog.setContentPane(content);
+        loadingDialog.pack();
+        loadingDialog.setResizable(false);
+        loadingDialog.setLocationRelativeTo(this);
+
+        javax.swing.Timer cancellationNotice = new javax.swing.Timer(5000, event -> {
+            loadingDialog.setTitle("Abbruch läuft");
+            message.setText("Der Abbruch dauert länger. Bitte warten …");
+        });
+        cancellationNotice.setRepeats(false);
+        FileLoadWorker worker = new FileLoadWorker(path) {
+            @Override
+            protected void done() {
+                IOException failure = null;
+                try {
+                    if (isCancellationRequested()) {
+                        throw new CancellationException();
+                    }
+                    reportSuccessfulLoad(editor.applyLoadedFile(get()));
+                } catch (CancellationException exception) {
+                    alertsTextPane.setText("Laden abgebrochen. Das bisherige Dokument bleibt geöffnet.");
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    failure = new IOException("Das Laden wurde unterbrochen.", exception);
+                } catch (ExecutionException exception) {
+                    Throwable cause = exception.getCause();
+                    failure = cause instanceof IOException ioException
+                            ? ioException : new IOException("Die Datei konnte nicht geladen werden.", cause);
+                } catch (IOException exception) {
+                    failure = exception;
+                } finally {
+                    cancellationNotice.stop();
+                    loadingDialog.dispose();
+                }
+                if (failure != null) {
+                    showFileError("Laden", failure);
+                }
+                editor.requestFocusInWindow();
+            }
+        };
+        Runnable cancelLoading = () -> {
+            if (worker.isCancellationRequested()) {
+                return;
+            }
+            cancelButton.setEnabled(false);
+            loadingDialog.setTitle("Laden wird abgebrochen");
+            message.setText("Wird abgebrochen …");
+            worker.requestCancellation();
+            cancellationNotice.start();
+        };
+        cancelButton.addActionListener(event -> cancelLoading.run());
+        loadingDialog.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent event) {
+                cancelLoading.run();
+            }
+        });
+        worker.execute();
+        loadingDialog.setVisible(true);
+    }
+
+    /** Im Gegensatz zu Future.cancel bleibt done() bis zum wirklichen Ende aus. */
+    static class FileLoadWorker extends SwingWorker<EditorModel.LoadedFile, Void> {
+        private final Path path;
+        private boolean cancellationRequested;
+        private Thread loadingThread;
+
+        FileLoadWorker(Path path) {
+            this.path = path;
+        }
+
+        synchronized boolean isCancellationRequested() {
+            return cancellationRequested;
+        }
+
+        synchronized void requestCancellation() {
+            cancellationRequested = true;
+            if (loadingThread != null) {
+                loadingThread.interrupt();
+            }
+        }
+
+        @Override
+        protected EditorModel.LoadedFile doInBackground() throws IOException {
+            synchronized (this) {
+                if (cancellationRequested) {
+                    throw new CancellationException();
+                }
+                loadingThread = Thread.currentThread();
+            }
+            try {
+                return EditorModel.readFile(path);
+            } finally {
+                synchronized (this) {
+                    // Unter demselben Lock wie interrupt(): keinen späteren
+                    // Auftrag auf einem wiederverwendeten Pool-Thread treffen.
+                    loadingThread = null;
+                }
+            }
+        }
+    }
+
+    private void reportSuccessfulLoad(EditorModel.LoadResult result) {
+        alertsTextPane.setText(String.format(
+                "Datei '%s' geladen: %d Zeichen, %d Byte.",
+                editor.getFilePath().getFileName(),
+                result.characterCount(),
+                result.byteCount()
+        ));
+        updateWindowTitle();
+        editor.requestFocusInWindow();
     }
 
     private boolean saveDocument() {

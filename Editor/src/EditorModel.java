@@ -7,16 +7,25 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
+import java.io.Reader;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.StandardCopyOption;
 import java.text.BreakIterator;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.CancellationException;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.JTextArea;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.PlainDocument;
 
 /**
  * Fachlogik fuer einen Texteditor. Unabhaengig von GUI und Controller. Nicht
@@ -33,9 +42,10 @@ public class EditorModel extends JTextArea {
     private int findPosition = -1;
     private Path filePath;
     private boolean dirty;
+    private Integer preparedWordCount;
 
     public EditorModel() {
-        getDocument().addDocumentListener(new DocumentListener() {
+        DocumentListener dirtyListener = new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent event) {
                 markDirty();
@@ -50,6 +60,13 @@ public class EditorModel extends JTextArea {
             public void changedUpdate(DocumentEvent event) {
                 markDirty();
             }
+        };
+        getDocument().addDocumentListener(dirtyListener);
+        addPropertyChangeListener("document", event -> {
+            ((Document) event.getOldValue()).removeDocumentListener(dirtyListener);
+            Document newDocument = (Document) event.getNewValue();
+            newDocument.removeDocumentListener(dirtyListener);
+            newDocument.addDocumentListener(dirtyListener);
         });
     }
 
@@ -66,16 +83,23 @@ public class EditorModel extends JTextArea {
     }
 
     public int getWordCount() {
-        return countWords(getText());
+        return preparedWordCount != null ? preparedWordCount : countWords(getText());
     }
 
     public static int countWords(String text) {
+        return countWords(text, false);
+    }
+
+    private static int countWords(String text, boolean cancellable) {
         BreakIterator words = BreakIterator.getWordInstance(Locale.GERMAN);
         words.setText(text);
 
         int wordCount = 0;
         int start = words.first();
         for (int end = words.next(); end != BreakIterator.DONE; start = end, end = words.next()) {
+            if (cancellable) {
+                checkLoadCancelled();
+            }
             if (containsLetterOrDigit(text, start, end)) {
                 wordCount++;
             }
@@ -138,9 +162,9 @@ public class EditorModel extends JTextArea {
             int lineEnd = getLineEndOffset(line);
             if (lineEnd > lineStart && "\n".equals(getText(lineEnd - 1, 1))) {
                 lineEnd--;
-            }
-            if (lineEnd > lineStart && "\r".equals(getText(lineEnd - 1, 1))) {
-                lineEnd--;
+                if (lineEnd > lineStart && "\r".equals(getText(lineEnd - 1, 1))) {
+                    lineEnd--;
+                }
             }
 
             int maximumColumn = lineEnd - lineStart;
@@ -165,17 +189,82 @@ public class EditorModel extends JTextArea {
     }
 
     public LoadResult load(Path path) throws IOException {
-        Path normalizedPath = normalize(path);
-        String loadedText = Files.readString(normalizedPath, StandardCharsets.UTF_8);
-        long byteCount = Files.size(normalizedPath);
+        return applyLoadedFile(readFile(path));
+    }
 
-        setText(loadedText);
-        filePath = normalizedPath;
+    /** Bereitet ein noch nicht angezeigtes Dokument im Hintergrund vor. */
+    public static LoadedFile readFile(Path path) throws IOException {
+        Path normalizedPath = normalize(path);
+        try {
+            checkLoadCancelled();
+            long byteCount = Files.size(normalizedPath);
+            PlainDocument document = new PlainDocument();
+            // Kein Swing-View und keine GUI-Listener hängen an diesem Dokument.
+            // Auch der speicherintensive Zeilenindex entsteht vor der Übernahme.
+            // FileChannel-I/O reagiert auf Thread-Unterbrechung; der Reader
+            // behält UTF-8-Zeichen über Blockgrenzen hinweg korrekt bei.
+            try (FileChannel channel = FileChannel.open(normalizedPath);
+                    Reader reader = Channels.newReader(channel, StandardCharsets.UTF_8.newDecoder(), 8192)) {
+                char[] buffer = new char[32768];
+                while (true) {
+                    checkLoadCancelled();
+                    int count = reader.read(buffer);
+                    if (count < 0) {
+                        break;
+                    }
+                    checkLoadCancelled();
+                    document.insertString(document.getLength(), new String(buffer, 0, count), null);
+                }
+            }
+            checkLoadCancelled();
+            int wordCount = countWords(document.getText(0, document.getLength()), true);
+            checkLoadCancelled();
+            return new LoadedFile(normalizedPath, document, byteCount, wordCount);
+        } catch (BadLocationException exception) {
+            throw new IOException("Das Textdokument konnte nicht vorbereitet werden.", exception);
+        } catch (OutOfMemoryError error) {
+            throw loadMemoryError(error);
+        }
+    }
+
+    private static void checkLoadCancelled() {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new CancellationException("Laden abgebrochen.");
+        }
+    }
+
+    /** Übernimmt vollständig gelesene Daten auf dem Swing-Event-Thread. */
+    public LoadResult applyLoadedFile(LoadedFile loadedFile) throws IOException {
+        Objects.requireNonNull(loadedFile);
+        Document previousDocument = getDocument();
+        int previousDot = getCaret().getDot();
+        int previousMark = getCaret().getMark();
+        int previousWordCount = getWordCount();
+        try {
+            preparedWordCount = loadedFile.wordCount();
+            setDocument(loadedFile.document());
+            setCaretPosition(getDocument().getLength());
+        } catch (OutOfMemoryError error) {
+            // Auch das Erzeugen des Swing-Views kann scheitern. Das alte
+            // Dokument wurde nicht verändert und kann wieder eingesetzt werden.
+            preparedWordCount = previousWordCount;
+            setDocument(previousDocument);
+            getCaret().setDot(previousMark);
+            getCaret().moveDot(previousDot);
+            throw loadMemoryError(error);
+        } finally {
+            preparedWordCount = null;
+        }
+        filePath = loadedFile.path();
         findPosition = -1;
-        setCaretPosition(getDocument().getLength());
         setDirty(false);
 
-        return new LoadResult(loadedText.length(), byteCount);
+        return new LoadResult(loadedFile.document().getLength(), loadedFile.byteCount());
+    }
+
+    private static IOException loadMemoryError(OutOfMemoryError error) {
+        return new IOException("Die Datei konnte nicht geladen oder angezeigt werden. "
+                + "Der Java-Speicher oder die interne Textdarstellung reicht dafür nicht aus.", error);
     }
 
     public void save() throws IOException {
@@ -188,12 +277,30 @@ public class EditorModel extends JTextArea {
 
     public void saveAs(Path path) throws IOException {
         Path normalizedPath = normalize(path);
-        Files.writeString(normalizedPath, getText(), StandardCharsets.UTF_8);
+        Path writePath = Files.isSymbolicLink(normalizedPath)
+                ? normalizedPath.toRealPath() : normalizedPath;
+        if (Files.exists(writePath) && !Files.isWritable(writePath)) {
+            throw new AccessDeniedException(writePath.toString());
+        }
+        // Erst vollständig schreiben, dann ersetzen: Schreibfehler dürfen die
+        // bisherige Datei nicht durch vorzeitiges Abschneiden beschädigen.
+        Path temporaryFile = Files.createTempFile(writePath.getParent(), ".editor-", ".tmp");
+        try {
+            Files.writeString(temporaryFile, getText(), StandardCharsets.UTF_8);
+            try {
+                Files.move(temporaryFile, writePath,
+                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException exception) {
+                Files.move(temporaryFile, writePath, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            Files.deleteIfExists(temporaryFile);
+        }
         filePath = normalizedPath;
         setDirty(false);
     }
 
-    private Path normalize(Path path) {
+    private static Path normalize(Path path) {
         if (path == null) {
             throw new IllegalArgumentException("Der Dateipfad darf nicht null sein.");
         }
@@ -248,6 +355,7 @@ public class EditorModel extends JTextArea {
 
         int replacePosition = getSelectionStart();
         replaceSelection(replaceString);
+        setCaretPosition(replacePosition + replaceString.length());
         findPosition = -1;
         return new ReplaceResult(replacePosition, searchString, replaceString, true);
     }
@@ -344,5 +452,8 @@ public class EditorModel extends JTextArea {
     }
 
     public record LoadResult(int characterCount, long byteCount) {
+    }
+
+    public record LoadedFile(Path path, PlainDocument document, long byteCount, int wordCount) {
     }
 }
