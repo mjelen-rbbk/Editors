@@ -33,6 +33,7 @@ public class EditorGUI extends javax.swing.JFrame {
         initComponents();
 
         configureFileHandling();
+        configureSearchHandling();
         editor.addPropertyChangeListener(
                 EditorModel.DIRTY_PROPERTY,
                 event -> updateWindowTitle()
@@ -75,6 +76,7 @@ public class EditorGUI extends javax.swing.JFrame {
         closeFileMenuItem = new javax.swing.JMenuItem();
         editMenu = new javax.swing.JMenu();
         searchEditMenuItem = new javax.swing.JMenuItem();
+        replaceAllEditMenuItem = new javax.swing.JMenuItem();
         helpMenu = new javax.swing.JMenu();
         infoHelpMenuItem = new javax.swing.JMenuItem();
 
@@ -209,6 +211,14 @@ public class EditorGUI extends javax.swing.JFrame {
         });
         editMenu.add(searchEditMenuItem);
 
+        replaceAllEditMenuItem.setText("Alles ersetzen");
+        replaceAllEditMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                replaceAllEditMenuItemActionPerformed(evt);
+            }
+        });
+        editMenu.add(replaceAllEditMenuItem);
+
         jMenuBar1.add(editMenu);
 
         helpMenu.setMnemonic('H');
@@ -302,7 +312,7 @@ public class EditorGUI extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void searchTermTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchTermTextFieldActionPerformed
-        // TODO add your handling code here:
+        performSearch();
     }//GEN-LAST:event_searchTermTextFieldActionPerformed
 
     private void ignoreCaseCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ignoreCaseCheckBoxActionPerformed
@@ -310,12 +320,11 @@ public class EditorGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_ignoreCaseCheckBoxActionPerformed
 
     private void replaceTermTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_replaceTermTextFieldActionPerformed
-        // TODO add your handling code here:
+        performReplace();
     }//GEN-LAST:event_replaceTermTextFieldActionPerformed
 
     private void performReplaceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_performReplaceButtonActionPerformed
         performReplace();
-        performSearch();
     }//GEN-LAST:event_performReplaceButtonActionPerformed
 
     private void performSearchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_performSearchButtonActionPerformed
@@ -339,7 +348,7 @@ public class EditorGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_closeFileMenuItemActionPerformed
 
     private void searchEditMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchEditMenuItemActionPerformed
-        performSearch();
+        focusSearchField();
     }//GEN-LAST:event_searchEditMenuItemActionPerformed
 
     private void infoHelpMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_infoHelpMenuItemActionPerformed
@@ -361,6 +370,10 @@ public class EditorGUI extends javax.swing.JFrame {
     private void openFileMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openFileMenuItemActionPerformed
         openDocument();
     }//GEN-LAST:event_openFileMenuItemActionPerformed
+
+    private void replaceAllEditMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_replaceAllEditMenuItemActionPerformed
+        performReplaceAll();
+    }//GEN-LAST:event_replaceAllEditMenuItemActionPerformed
 
     /**
      * @param args the command line arguments
@@ -411,6 +424,7 @@ public class EditorGUI extends javax.swing.JFrame {
     private javax.swing.JButton performReplaceButton;
     private javax.swing.JButton performSearchButton;
     private javax.swing.JTextField replaceTermTextField;
+    private javax.swing.JMenuItem replaceAllEditMenuItem;
     private javax.swing.JMenuItem saveAsFileMenuItem;
     private javax.swing.JMenuItem saveFileMenuItem;
     private javax.swing.JMenuItem searchEditMenuItem;
@@ -419,20 +433,60 @@ public class EditorGUI extends javax.swing.JFrame {
 
     private void performSearch() {
         String searchString = searchTermTextField.getText();
+        if (!validateSearchTerm(searchString)) {
+            return;
+        }
+
         boolean ignoreCase = ignoreCaseCheckBox.isSelected();
         SearchResult searchResult = editor.find(searchString, ignoreCase);
         
         alertsTextPane.setText(ResultFormatterHelper.formatSearchResult(searchResult));
-        editor.requestFocus();
+        editor.requestFocusInWindow();
         
         requestSearchWrapIfNeeded(searchResult);
     }
     
     private void performReplace() {
+        String searchString = searchTermTextField.getText();
+        if (!validateSearchTerm(searchString)) {
+            return;
+        }
+
         String replaceString = replaceTermTextField.getText();
-        
-        ReplaceResult replaceResult = editor.replace(replaceString);
+        boolean ignoreCase = ignoreCaseCheckBox.isSelected();
+        ReplaceResult replaceResult = editor.replace(searchString, replaceString, ignoreCase);
         alertsTextPane.setText(ResultFormatterHelper.formatReplaceResult(replaceResult));
+        editor.requestFocusInWindow();
+    }
+
+    private void performReplaceAll() {
+        String searchString = searchTermTextField.getText();
+        if (!validateSearchTerm(searchString)) {
+            return;
+        }
+
+        int replacementCount = editor.replaceAll(
+                searchString,
+                replaceTermTextField.getText(),
+                ignoreCaseCheckBox.isSelected()
+        );
+        alertsTextPane.setText(ResultFormatterHelper.formatReplaceAllResult(replacementCount));
+        editor.requestFocusInWindow();
+    }
+
+    private boolean validateSearchTerm(String searchString) {
+        if (searchString != null && !searchString.isEmpty()) {
+            return true;
+        }
+
+        alertsTextPane.setText("Bitte einen Suchtext eingeben.");
+        focusSearchField();
+        return false;
+    }
+
+    private void focusSearchField() {
+        searchTermTextField.requestFocusInWindow();
+        searchTermTextField.selectAll();
     }
     
     private void updateCaretInformation(CaretEvent e) {
@@ -519,6 +573,13 @@ public class EditorGUI extends javax.swing.JFrame {
                 requestClose();
             }
         });
+    }
+
+    private void configureSearchHandling() {
+        searchEditMenuItem.setAccelerator(KeyStroke.getKeyStroke(
+                KeyEvent.VK_F,
+                InputEvent.CTRL_DOWN_MASK
+        ));
     }
 
     private void createNewDocument() {

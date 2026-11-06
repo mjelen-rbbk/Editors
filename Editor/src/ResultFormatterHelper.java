@@ -17,8 +17,16 @@ public class ResultFormatterHelper {
     
     public static String formatReplaceResult(ReplaceResult result) {
         if (result.textReplaced()) {
-            return "'" + result.replaceText()+ "' an Position " + result.replacePosition()+ " ersetzt.";
+            return "Treffer an Position " + result.replacePosition()
+                    + " durch '" + result.replaceText() + "' ersetzt.";
         } else
-            return "'" + result.replaceText() + "' wurde nicht ersetzt.";
+            return "'" + result.searchTerm() + "' wurde nicht gefunden und nicht ersetzt.";
+    }
+
+    public static String formatReplaceAllResult(int replacementCount) {
+        if (replacementCount == 1) {
+            return "1 Treffer wurde ersetzt.";
+        }
+        return replacementCount + " Treffer wurden ersetzt.";
     }
 }

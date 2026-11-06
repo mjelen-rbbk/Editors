@@ -7,5 +7,10 @@
  *
  * @author info
  */
-public record ReplaceResult(int replacePosition, String replaceText, boolean textReplaced) {
+public record ReplaceResult(
+        int replacePosition,
+        String searchTerm,
+        String replaceText,
+        boolean textReplaced
+) {
 }
