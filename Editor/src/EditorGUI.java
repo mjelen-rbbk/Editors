@@ -1,4 +1,10 @@
 
+import java.awt.BorderLayout;
+import java.awt.Dialog;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.Font;
+import java.awt.GridLayout;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
@@ -8,11 +14,22 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.IntConsumer;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.KeyStroke;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JSeparator;
+import javax.swing.WindowConstants;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.CaretEvent;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.BadLocationException;
 
@@ -26,7 +43,12 @@ import javax.swing.text.BadLocationException;
  * @author info
  */
 public class EditorGUI extends javax.swing.JFrame {
-    
+
+    private static final String[] SPECIAL_CHARACTERS = {
+        "€", "©", "®", "™", "°", "±",
+        "×", "÷", "µ", "Ω", "α", "β",
+        "←", "→", "↑", "↓", "✓", "★"
+    };
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(EditorGUI.class.getName());
 
     /**
@@ -37,11 +59,13 @@ public class EditorGUI extends javax.swing.JFrame {
 
         configureFileHandling();
         configureSearchHandling();
+        configureExtras();
         editor.addPropertyChangeListener(
                 EditorModel.DIRTY_PROPERTY,
                 event -> updateWindowTitle()
         );
         editor.newDocument();
+        updateLiveStatistics();
         updateWindowTitle();
     }
 
@@ -70,6 +94,9 @@ public class EditorGUI extends javax.swing.JFrame {
         columnFormattedTextField = new javax.swing.JFormattedTextField();
         charInputLabel = new javax.swing.JLabel();
         charFormattedTextField = new javax.swing.JFormattedTextField();
+        specialCharactersButton = new javax.swing.JButton();
+        statisticsLabel = new javax.swing.JLabel();
+        editorLogoPanel = new EditorLogoPanel();
         jMenuBar1 = new javax.swing.JMenuBar();
         fileMenu = new javax.swing.JMenu();
         newFileMenuItem = new javax.swing.JMenuItem();
@@ -80,6 +107,8 @@ public class EditorGUI extends javax.swing.JFrame {
         editMenu = new javax.swing.JMenu();
         searchEditMenuItem = new javax.swing.JMenuItem();
         replaceAllEditMenuItem = new javax.swing.JMenuItem();
+        specialCharactersEditMenuItem = new javax.swing.JMenuItem();
+        statisticsMenuItem = new javax.swing.JMenuItem();
         helpMenu = new javax.swing.JMenu();
         infoHelpMenuItem = new javax.swing.JMenuItem();
 
@@ -169,6 +198,19 @@ public class EditorGUI extends javax.swing.JFrame {
             }
         });
 
+        specialCharactersButton.setText("Sonderzeichen…");
+        specialCharactersButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                specialCharactersButtonActionPerformed(evt);
+            }
+        });
+
+        statisticsLabel.setText("Statistik: 0 Wörter | 0 Zeichen");
+        statisticsLabel.setToolTipText("Details unter Bearbeiten → Textstatistik");
+        statisticsLabel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+
+        editorLogoPanel.setToolTipText("Selbst gezeichnetes Editor-Logo");
+
         fileMenu.setMnemonic('D');
         fileMenu.setText("Datei");
 
@@ -180,7 +222,7 @@ public class EditorGUI extends javax.swing.JFrame {
         });
         fileMenu.add(newFileMenuItem);
 
-        openFileMenuItem.setText("Öffnen");
+        openFileMenuItem.setText("Öffnen…");
         openFileMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 openFileMenuItemActionPerformed(evt);
@@ -196,7 +238,7 @@ public class EditorGUI extends javax.swing.JFrame {
         });
         fileMenu.add(saveFileMenuItem);
 
-        saveAsFileMenuItem.setText("Speichern unter");
+        saveAsFileMenuItem.setText("Speichern unter…");
         saveAsFileMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 saveAsFileMenuItemActionPerformed(evt);
@@ -233,6 +275,22 @@ public class EditorGUI extends javax.swing.JFrame {
         });
         editMenu.add(replaceAllEditMenuItem);
 
+        specialCharactersEditMenuItem.setText("Sonderzeichen…");
+        specialCharactersEditMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                specialCharactersEditMenuItemActionPerformed(evt);
+            }
+        });
+        editMenu.add(specialCharactersEditMenuItem);
+
+        statisticsMenuItem.setText("Textstatistik");
+        statisticsMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                statisticsMenuItemActionPerformed(evt);
+            }
+        });
+        editMenu.add(statisticsMenuItem);
+
         jMenuBar1.add(editMenu);
 
         helpMenu.setMnemonic('H');
@@ -259,18 +317,19 @@ public class EditorGUI extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 588, Short.MAX_VALUE)
-                                .addGap(34, 34, 34))
+                            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 812, Short.MAX_VALUE)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(alertsPaneLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGap(34, 34, 34)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(searchTermTextField)
                             .addComponent(ignoreCaseCheckBox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(replaceTermTextField)
                             .addComponent(performReplaceButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(performSearchButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                            .addComponent(performSearchButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(specialCharactersButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(editorLogoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addComponent(jScrollPane3)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lineInputLabel)
@@ -284,28 +343,34 @@ public class EditorGUI extends javax.swing.JFrame {
                         .addComponent(charInputLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(charFormattedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(statisticsLabel)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 289, Short.MAX_VALUE)
-                .addGap(7, 7, 7)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 260, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(charInputLabel)
-                        .addComponent(charFormattedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(columnInputLabel)
-                        .addComponent(columnFormattedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(lineInputLabel)
-                        .addComponent(lineFormattedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
+                        .addGap(7, 7, 7)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(charInputLabel)
+                                .addComponent(charFormattedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(columnInputLabel)
+                                .addComponent(columnFormattedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(lineInputLabel)
+                                .addComponent(lineFormattedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(statisticsLabel)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(searchTermTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(ignoreCaseCheckBox)
@@ -314,11 +379,15 @@ public class EditorGUI extends javax.swing.JFrame {
                         .addGap(18, 18, 18)
                         .addComponent(replaceTermTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(performReplaceButton))
-                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(performReplaceButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(specialCharactersButton)
+                        .addGap(18, 18, 18)
+                        .addComponent(editorLogoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(alertsPaneLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 124, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
 
@@ -405,6 +474,18 @@ public class EditorGUI extends javax.swing.JFrame {
         );
     }//GEN-LAST:event_lineFormattedTextFieldActionPerformed
 
+    private void specialCharactersButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_specialCharactersButtonActionPerformed
+        showSpecialCharactersDialog();
+    }//GEN-LAST:event_specialCharactersButtonActionPerformed
+
+    private void specialCharactersEditMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_specialCharactersEditMenuItemActionPerformed
+        showSpecialCharactersDialog();
+    }//GEN-LAST:event_specialCharactersEditMenuItemActionPerformed
+
+    private void statisticsMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_statisticsMenuItemActionPerformed
+        showStatisticsDialog();
+    }//GEN-LAST:event_statisticsMenuItemActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -440,6 +521,7 @@ public class EditorGUI extends javax.swing.JFrame {
     private javax.swing.JLabel columnInputLabel;
     private javax.swing.JMenu editMenu;
     private EditorModel editor;
+    private EditorLogoPanel editorLogoPanel;
     private javax.swing.JMenu fileMenu;
     private javax.swing.JMenu helpMenu;
     private javax.swing.JCheckBox ignoreCaseCheckBox;
@@ -453,12 +535,16 @@ public class EditorGUI extends javax.swing.JFrame {
     private javax.swing.JMenuItem openFileMenuItem;
     private javax.swing.JButton performReplaceButton;
     private javax.swing.JButton performSearchButton;
-    private javax.swing.JTextField replaceTermTextField;
     private javax.swing.JMenuItem replaceAllEditMenuItem;
+    private javax.swing.JTextField replaceTermTextField;
     private javax.swing.JMenuItem saveAsFileMenuItem;
     private javax.swing.JMenuItem saveFileMenuItem;
     private javax.swing.JMenuItem searchEditMenuItem;
     private javax.swing.JTextField searchTermTextField;
+    private javax.swing.JButton specialCharactersButton;
+    private javax.swing.JMenuItem specialCharactersEditMenuItem;
+    private javax.swing.JLabel statisticsLabel;
+    private javax.swing.JMenuItem statisticsMenuItem;
     // End of variables declaration//GEN-END:variables
 
     private void performSearch() {
@@ -571,28 +657,50 @@ public class EditorGUI extends javax.swing.JFrame {
     }
     
     private void showInfoDialog() {
-        String infoDialogHtml = """
-                                <html>
-                                    <h1>
-                                        Editor
-                                    </h1>
-                                    <p>
-                                        Ein Editor mit Menü und Positionsanzeige.
-                                    </p>
-                                    <p>
-                                        <b>© 2026 – Michael Jelen – ITO11</b>
-                                    </p>
-                                    <p>
-                                        Individuelle Zusatzfunktion: wird in Meilenstein 05 ergänzt.
-                                    </p>
-                                </html>
-                                """;
-        
+        JPanel infoPanel = new JPanel(new BorderLayout(0, 18));
+        infoPanel.setBorder(new EmptyBorder(16, 16, 12, 16));
+
+        EditorLogoPanel infoLogo = new EditorLogoPanel();
+        infoLogo.setPreferredSize(new Dimension(88, 88));
+
+        JLabel title = new JLabel("Editor");
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 28.0f));
+        JPanel heading = new JPanel();
+        heading.setLayout(new BoxLayout(heading, BoxLayout.Y_AXIS));
+        heading.setBorder(new EmptyBorder(8, 0, 0, 0));
+        heading.add(title);
+        heading.add(Box.createVerticalStrut(6));
+        heading.add(new JLabel("Text bearbeiten. Suchen. Ersetzen."));
+
+        JPanel header = new JPanel(new BorderLayout(16, 0));
+        header.add(infoLogo, BorderLayout.WEST);
+        header.add(heading, BorderLayout.CENTER);
+        infoPanel.add(header, BorderLayout.NORTH);
+
+        JPanel details = new JPanel();
+        details.setLayout(new BoxLayout(details, BoxLayout.Y_AXIS));
+        JLabel extraFeatureTitle = new JLabel("Zusatzfunktion: Live-Textstatistik");
+        extraFeatureTitle.setFont(extraFeatureTitle.getFont().deriveFont(Font.BOLD));
+        details.add(extraFeatureTitle);
+        details.add(Box.createVerticalStrut(8));
+        details.add(new JLabel("Wörter und Zeichen werden während der Eingabe gezählt."));
+        details.add(Box.createVerticalStrut(4));
+        details.add(new JLabel("Bearbeiten → Textstatistik zeigt weitere Angaben"));
+        details.add(new JLabel("zum Dokument und zur aktuellen Auswahl."));
+        infoPanel.add(details, BorderLayout.CENTER);
+
+        JPanel footer = new JPanel(new BorderLayout(0, 12));
+        footer.add(new JSeparator(), BorderLayout.NORTH);
+        JLabel copyright = new JLabel("© 2026 – Michael Jelen – ITO11");
+        copyright.setFont(copyright.getFont().deriveFont(Font.BOLD));
+        footer.add(copyright, BorderLayout.CENTER);
+        infoPanel.add(footer, BorderLayout.SOUTH);
+
         JOptionPane.showMessageDialog(
             this,
-            infoDialogHtml,
-            "Info",
-            JOptionPane.INFORMATION_MESSAGE
+            infoPanel,
+            "Über den Editor",
+            JOptionPane.PLAIN_MESSAGE
         );
     }
     
@@ -642,6 +750,97 @@ public class EditorGUI extends javax.swing.JFrame {
                 KeyEvent.VK_F,
                 InputEvent.CTRL_DOWN_MASK
         ));
+    }
+
+    private void configureExtras() {
+        specialCharactersEditMenuItem.setAccelerator(KeyStroke.getKeyStroke(
+                KeyEvent.VK_I,
+                InputEvent.CTRL_DOWN_MASK
+        ));
+
+        editor.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent event) {
+                updateLiveStatistics();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent event) {
+                updateLiveStatistics();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent event) {
+                updateLiveStatistics();
+            }
+        });
+        updateLiveStatistics();
+    }
+
+    private void updateLiveStatistics() {
+        statisticsLabel.setText(
+                "Statistik: " + editor.getWordCount() + " Wörter | " + editor.getCharacterCount() + " Zeichen"
+        );
+    }
+
+    private void showStatisticsDialog() {
+        String selection = editor.getSelectedText();
+        String statistics = "Wörter: " + editor.getWordCount()
+                + "\nZeichen: " + editor.getCharacterCount()
+                + "\nZeilen: " + editor.getLineCount()
+                + "\nZeichen ohne Leerraum: "
+                + editor.getText().chars().filter(c -> !Character.isWhitespace(c)).count()
+                + "\n\nAusgewählte Zeichen: " + (selection == null ? 0 : selection.length())
+                + "\nWörter in der Auswahl: "
+                + EditorModel.countWords(selection == null ? "" : selection);
+
+        JOptionPane.showMessageDialog(
+                this,
+                statistics,
+                "Textstatistik",
+                JOptionPane.INFORMATION_MESSAGE
+        );
+    }
+
+    private void showSpecialCharactersDialog() {
+        JDialog dialog = new JDialog(
+                this,
+                "Sonderzeichen",
+                Dialog.ModalityType.APPLICATION_MODAL
+        );
+        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+
+        JLabel instruction = new JLabel("Zeichen mit der Maus auswählen:");
+        JPanel characterPanel = new JPanel(new GridLayout(0, 6, 6, 6));
+        for (String specialCharacter : SPECIAL_CHARACTERS) {
+            JButton characterButton = new JButton(specialCharacter);
+            characterButton.setFont(editor.getFont().deriveFont(20.0f));
+            characterButton.setToolTipText("'" + specialCharacter + "' einfügen");
+            characterButton.addActionListener(event -> {
+                insertSpecialCharacter(specialCharacter);
+            });
+            characterPanel.add(characterButton);
+        }
+
+        JPanel content = new JPanel(new BorderLayout(8, 8));
+        content.setBorder(new EmptyBorder(10, 10, 10, 10));
+        content.add(instruction, BorderLayout.NORTH);
+        content.add(characterPanel, BorderLayout.CENTER);
+        dialog.setContentPane(content);
+        dialog.pack();
+        dialog.setResizable(false);
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+
+        EventQueue.invokeLater(editor::requestFocusInWindow);
+    }
+
+    private void insertSpecialCharacter(String specialCharacter) {
+        int insertPosition = editor.insertAtCaret(specialCharacter);
+        alertsTextPane.setText(
+                "Sonderzeichen '" + specialCharacter
+                        + "' an Position " + insertPosition + " eingefügt."
+        );
     }
 
     private void createNewDocument() {

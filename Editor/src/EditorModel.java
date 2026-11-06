@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.BreakIterator;
+import java.util.Locale;
 import java.util.Objects;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -57,6 +59,47 @@ public class EditorModel extends JTextArea {
 
     public boolean isDirty() {
         return dirty;
+    }
+
+    public int getCharacterCount() {
+        return getDocument().getLength();
+    }
+
+    public int getWordCount() {
+        return countWords(getText());
+    }
+
+    public static int countWords(String text) {
+        BreakIterator words = BreakIterator.getWordInstance(Locale.GERMAN);
+        words.setText(text);
+
+        int wordCount = 0;
+        int start = words.first();
+        for (int end = words.next(); end != BreakIterator.DONE; start = end, end = words.next()) {
+            if (containsLetterOrDigit(text, start, end)) {
+                wordCount++;
+            }
+        }
+        return wordCount;
+    }
+
+    public int insertAtCaret(String text) {
+        Objects.requireNonNull(text, "Der einzufügende Text darf nicht null sein.");
+        int insertPosition = getSelectionStart();
+        replaceSelection(text);
+        setCaretPosition(insertPosition + text.length());
+        return insertPosition;
+    }
+
+    private static boolean containsLetterOrDigit(String text, int start, int end) {
+        for (int index = start; index < end;) {
+            int codePoint = text.codePointAt(index);
+            if (Character.isLetterOrDigit(codePoint)) {
+                return true;
+            }
+            index += Character.charCount(codePoint);
+        }
+        return false;
     }
 
     public void moveCaretToOffset(int offset) {

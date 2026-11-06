@@ -20,7 +20,7 @@
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="openFileMenuItem">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Öffnen"/>
+                <Property name="text" type="java.lang.String" value="&#xd6;ffnen&#x2026;"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="openFileMenuItemActionPerformed"/>
@@ -36,7 +36,7 @@
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="saveAsFileMenuItem">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Speichern unter"/>
+                <Property name="text" type="java.lang.String" value="Speichern unter&#x2026;"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="saveAsFileMenuItemActionPerformed"/>
@@ -72,6 +72,22 @@
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="replaceAllEditMenuItemActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="specialCharactersEditMenuItem">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Sonderzeichen&#x2026;"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="specialCharactersEditMenuItemActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="statisticsMenuItem">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Textstatistik"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="statisticsMenuItemActionPerformed"/>
               </Events>
             </MenuItem>
           </SubComponents>
@@ -123,21 +139,21 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" attributes="0">
-                              <Component id="jScrollPane2" pref="588" max="32767" attributes="0"/>
-                              <EmptySpace min="-2" pref="34" max="-2" attributes="0"/>
-                          </Group>
+                          <Component id="jScrollPane2" pref="812" max="32767" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="alertsPaneLabel" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="32767" attributes="0"/>
+                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                           </Group>
                       </Group>
+                      <EmptySpace min="34" pref="34" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
                           <Component id="searchTermTextField" alignment="0" max="32767" attributes="0"/>
                           <Component id="ignoreCaseCheckBox" alignment="0" max="32767" attributes="0"/>
                           <Component id="replaceTermTextField" alignment="0" max="32767" attributes="0"/>
                           <Component id="performReplaceButton" alignment="0" max="32767" attributes="0"/>
                           <Component id="performSearchButton" max="32767" attributes="0"/>
+                          <Component id="specialCharactersButton" alignment="0" max="32767" attributes="0"/>
+                          <Component id="editorLogoPanel" alignment="0" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                   <Component id="jScrollPane3" alignment="0" max="32767" attributes="0"/>
@@ -153,7 +169,8 @@
                       <Component id="charInputLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="charFormattedTextField" min="-2" pref="50" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
+                      <Component id="statisticsLabel" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -164,24 +181,32 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jScrollPane3" pref="289" max="32767" attributes="0"/>
-              <EmptySpace min="-2" pref="7" max="-2" attributes="0"/>
+              <Component id="jScrollPane3" pref="260" max="32767" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="103" alignment="0" groupAlignment="3" attributes="0">
-                      <Component id="charInputLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="charFormattedTextField" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Group type="102" attributes="0">
+                      <EmptySpace min="-2" pref="7" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="103" alignment="0" groupAlignment="3" attributes="0">
+                              <Component id="charInputLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="charFormattedTextField" alignment="3" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="103" groupAlignment="3" attributes="0">
+                              <Component id="columnInputLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="columnFormattedTextField" alignment="3" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="103" groupAlignment="3" attributes="0">
+                              <Component id="lineInputLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="lineFormattedTextField" alignment="3" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                      </Group>
                   </Group>
-                  <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="columnInputLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="columnFormattedTextField" alignment="3" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="lineInputLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="lineFormattedTextField" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Group type="102" alignment="0" attributes="0">
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="statisticsLabel" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="1" attributes="0">
+              <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="1" attributes="0">
                       <Component id="searchTermTextField" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
@@ -192,11 +217,15 @@
                       <Component id="replaceTermTextField" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="performReplaceButton" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Component id="specialCharactersButton" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
+                      <Component id="editorLogoPanel" min="-2" pref="80" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="1" attributes="0">
                       <Component id="alertsPaneLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jScrollPane2" min="-2" pref="124" max="-2" attributes="0"/>
+                      <Component id="jScrollPane2" min="-2" pref="250" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -337,5 +366,31 @@
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="charFormattedTextFieldActionPerformed"/>
       </Events>
     </Component>
+    <Component class="javax.swing.JButton" name="specialCharactersButton">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Sonderzeichen&#x2026;"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="specialCharactersButtonActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="statisticsLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Statistik: 0 W&#xf6;rter | 0 Zeichen"/>
+        <Property name="toolTipText" type="java.lang.String" value="Details unter Bearbeiten &#x2192; Textstatistik"/>
+        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+          <Border info="org.netbeans.modules.form.compat2.border.EtchedBorderInfo">
+            <EtchetBorder/>
+          </Border>
+        </Property>
+      </Properties>
+    </Component>
+    <Container class="EditorLogoPanel" name="editorLogoPanel">
+      <Properties>
+        <Property name="toolTipText" type="java.lang.String" value="Selbst gezeichnetes Editor-Logo"/>
+      </Properties>
+
+      <Layout class="org.netbeans.modules.form.compat2.layouts.DesignFlowLayout"/>
+    </Container>
   </SubComponents>
 </Form>
