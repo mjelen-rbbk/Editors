@@ -42,8 +42,8 @@ import javax.swing.text.View;
 public class EditorModel extends JTextArea {
     public static final String DIRTY_PROPERTY = "dirty";
     private static final int GUIDE_COLUMN = 60;
-    // Spalten sind 1-basiert: Spalte 60 beginnt nach 59 Zeichen.
-    private static final String GUIDE_WIDTH_TEXT = "0".repeat(GUIDE_COLUMN - 1);
+    // 0-basierte Spalte 60 liegt nach 60 Zeichenbreiten.
+    private static final String GUIDE_WIDTH_TEXT = "0".repeat(GUIDE_COLUMN);
 
     private int findPosition = -1;
     private Path filePath;
@@ -187,9 +187,9 @@ public class EditorModel extends JTextArea {
         }
     }
 
-    public void moveCaretToColumn(int oneBasedColumn) {
-        if (oneBasedColumn < 1) {
-            throw new IllegalArgumentException("Die Spalte muss mindestens 1 sein.");
+    public void moveCaretToColumn(int zeroBasedColumn) {
+        if (zeroBasedColumn < 0) {
+            throw new IllegalArgumentException("Die Spalte darf nicht negativ sein.");
         }
 
         try {
@@ -203,14 +203,14 @@ public class EditorModel extends JTextArea {
                 }
             }
 
-            int maximumColumn = lineEnd - lineStart + 1;
-            if (oneBasedColumn > maximumColumn) {
+            int maximumColumn = lineEnd - lineStart;
+            if (zeroBasedColumn > maximumColumn) {
                 throw new IllegalArgumentException(
-                        "Die Spalte muss in dieser Zeile zwischen 1 und "
+                        "Die Spalte muss in dieser Zeile zwischen 0 und "
                                 + maximumColumn + " liegen."
                 );
             }
-            setCaretPosition(lineStart + oneBasedColumn - 1);
+            setCaretPosition(lineStart + zeroBasedColumn);
         } catch (BadLocationException exception) {
             throw new IllegalStateException("Die Spaltenposition konnte nicht ermittelt werden.", exception);
         }

@@ -188,9 +188,9 @@ public class EditorGUI extends javax.swing.JFrame {
 
         lineInputLabel.setText("Zeile (ab 1):");
 
-        columnInputLabel.setText("Spalte (ab 1):");
+        columnInputLabel.setText("Spalte (ab 0):");
 
-        columnFormattedTextField.setText("1");
+        columnFormattedTextField.setText("0");
         columnFormattedTextField.setToolTipText("");
         columnFormattedTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -449,7 +449,7 @@ public class EditorGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_closeFileMenuItemActionPerformed
 
     private void searchEditMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchEditMenuItemActionPerformed
-        focusSearchField();
+        performSearch();
     }//GEN-LAST:event_searchEditMenuItemActionPerformed
 
     private void infoHelpMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_infoHelpMenuItemActionPerformed
@@ -630,7 +630,7 @@ public class EditorGUI extends javax.swing.JFrame {
         try {
             int zeroBasedLine = editor.getLineOfOffset(position);
             int line = zeroBasedLine + 1;
-            int column = position - editor.getLineStartOffset(zeroBasedLine) + 1;
+            int column = position - editor.getLineStartOffset(zeroBasedLine);
 
             lineFormattedTextField.setText(Integer.toString(line));
             columnFormattedTextField.setText(Integer.toString(column));
