@@ -702,6 +702,7 @@ public class EditorGUI extends javax.swing.JFrame {
         details.add(Box.createVerticalStrut(8));
         details.add(new JLabel("Zeichen erscheinen sofort; Wörter werden nach einer"));
         details.add(new JLabel("kurzen Eingabepause im Hintergrund gezählt."));
+        details.add(Box.createVerticalStrut(4));
         details.add(new JLabel("Die Werte erscheinen unten rechts unter dem Texteingabefeld."));
         details.add(Box.createVerticalStrut(4));
         details.add(new JLabel("\"Bearbeiten\" → \"Textstatistik\" zeigt weitere Angaben"));
