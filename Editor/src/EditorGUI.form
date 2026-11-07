@@ -327,7 +327,7 @@
     <Component class="javax.swing.JFormattedTextField" name="lineFormattedTextField">
       <Properties>
         <Property name="text" type="java.lang.String" value="1"/>
-        <Property name="toolTipText" type="java.lang.String" value="1-basierte Zeilennummer; Enter bewegt den Cursor zum Zeilenanfang."/>
+        <Property name="toolTipText" type="java.lang.String" value=""/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="lineFormattedTextFieldActionPerformed"/>
@@ -346,7 +346,7 @@
     <Component class="javax.swing.JFormattedTextField" name="columnFormattedTextField">
       <Properties>
         <Property name="text" type="java.lang.String" value="1"/>
-        <Property name="toolTipText" type="java.lang.String" value="1-basierte Spalte in der aktuellen Zeile; Enter bewegt den Cursor."/>
+        <Property name="toolTipText" type="java.lang.String" value=""/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="columnFormattedTextFieldActionPerformed"/>
@@ -360,7 +360,7 @@
     <Component class="javax.swing.JFormattedTextField" name="charFormattedTextField">
       <Properties>
         <Property name="text" type="java.lang.String" value="0"/>
-        <Property name="toolTipText" type="java.lang.String" value="0-basierter absoluter Zeichenoffset; Enter bewegt den Cursor."/>
+        <Property name="toolTipText" type="java.lang.String" value=""/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="charFormattedTextFieldActionPerformed"/>
@@ -377,7 +377,7 @@
     <Component class="javax.swing.JLabel" name="statisticsLabel">
       <Properties>
         <Property name="text" type="java.lang.String" value="Statistik: 0 W&#xf6;rter | 0 Zeichen"/>
-        <Property name="toolTipText" type="java.lang.String" value="Details unter Bearbeiten &#x2192; Textstatistik"/>
+        <Property name="toolTipText" type="java.lang.String" value="Details unter &quot;Bearbeiten&quot; &#x2192; &quot;Textstatistik&quot;"/>
         <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
           <Border info="org.netbeans.modules.form.compat2.border.EtchedBorderInfo">
             <EtchetBorder/>
@@ -387,7 +387,7 @@
     </Component>
     <Container class="EditorLogoPanel" name="editorLogoPanel">
       <Properties>
-        <Property name="toolTipText" type="java.lang.String" value="Selbst gezeichnetes Editor-Logo"/>
+        <Property name="toolTipText" type="java.lang.String" value="Editor-Logo"/>
       </Properties>
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.DesignFlowLayout"/>

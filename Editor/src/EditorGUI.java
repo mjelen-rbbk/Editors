@@ -179,7 +179,7 @@ public class EditorGUI extends javax.swing.JFrame {
         });
 
         lineFormattedTextField.setText("1");
-        lineFormattedTextField.setToolTipText("1-basierte Zeilennummer; Enter bewegt den Cursor zum Zeilenanfang.");
+        lineFormattedTextField.setToolTipText("");
         lineFormattedTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 lineFormattedTextFieldActionPerformed(evt);
@@ -191,7 +191,7 @@ public class EditorGUI extends javax.swing.JFrame {
         columnInputLabel.setText("Spalte (ab 1):");
 
         columnFormattedTextField.setText("1");
-        columnFormattedTextField.setToolTipText("1-basierte Spalte in der aktuellen Zeile; Enter bewegt den Cursor.");
+        columnFormattedTextField.setToolTipText("");
         columnFormattedTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 columnFormattedTextFieldActionPerformed(evt);
@@ -201,7 +201,7 @@ public class EditorGUI extends javax.swing.JFrame {
         charInputLabel.setText("Zeichen (ab 0):");
 
         charFormattedTextField.setText("0");
-        charFormattedTextField.setToolTipText("0-basierter absoluter Zeichenoffset; Enter bewegt den Cursor.");
+        charFormattedTextField.setToolTipText("");
         charFormattedTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 charFormattedTextFieldActionPerformed(evt);
@@ -216,10 +216,10 @@ public class EditorGUI extends javax.swing.JFrame {
         });
 
         statisticsLabel.setText("Statistik: 0 Wörter | 0 Zeichen");
-        statisticsLabel.setToolTipText("Details unter Bearbeiten → Textstatistik");
+        statisticsLabel.setToolTipText("Details unter \"Bearbeiten\" → \"Textstatistik\"");
         statisticsLabel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        editorLogoPanel.setToolTipText("Selbst gezeichnetes Editor-Logo");
+        editorLogoPanel.setToolTipText("Editor-Logo");
 
         fileMenu.setMnemonic('D');
         fileMenu.setText("Datei");
@@ -581,6 +581,13 @@ public class EditorGUI extends javax.swing.JFrame {
         String replaceString = replaceTermTextField.getText();
         boolean ignoreCase = ignoreCaseCheckBox.isSelected();
         ReplaceResult replaceResult = editor.replace(searchString, replaceString, ignoreCase);
+        if (!replaceResult.textReplaced() && editor.getCaretPosition() > 0
+                && confirmRestartFromBeginning("Von Anfang an suchen und den ersten Treffer ersetzen?")) {
+            editor.setCaretPosition(0);
+            // Genau ein weiterer Versuch, damit bei fehlendem Suchtext keine
+            // wiederholte Rückfrage entsteht und die Ersetzungsmeldung bleibt.
+            replaceResult = editor.replace(searchString, replaceString, ignoreCase);
+        }
         alertsTextPane.setText(ResultFormatterHelper.formatReplaceResult(replaceResult));
         editor.requestFocusInWindow();
     }
@@ -695,8 +702,9 @@ public class EditorGUI extends javax.swing.JFrame {
         details.add(Box.createVerticalStrut(8));
         details.add(new JLabel("Zeichen erscheinen sofort; Wörter werden nach einer"));
         details.add(new JLabel("kurzen Eingabepause im Hintergrund gezählt."));
+        details.add(new JLabel("Die Werte erscheinen unten rechts unter dem Texteingabefeld."));
         details.add(Box.createVerticalStrut(4));
-        details.add(new JLabel("Bearbeiten → Textstatistik zeigt weitere Angaben"));
+        details.add(new JLabel("\"Bearbeiten\" → \"Textstatistik\" zeigt weitere Angaben"));
         details.add(new JLabel("zum Dokument und zur aktuellen Auswahl."));
         infoPanel.add(details, BorderLayout.CENTER);
 
@@ -724,18 +732,22 @@ public class EditorGUI extends javax.swing.JFrame {
             return;
         }
         
+        if (confirmRestartFromBeginning("Von Anfang an suchen?")) {
+            editor.setCaretPosition(0);
+            performSearch();
+        }
+    }
+
+    private boolean confirmRestartFromBeginning(String question) {
         int userOptionChoice = JOptionPane.showConfirmDialog(
                 this,
-                "Von Anfang an suchen?",
+                question,
                 "Keine Treffer",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE
         );
         
-        if (userOptionChoice == JOptionPane.YES_OPTION) {
-            editor.setCaretPosition(0);
-            performSearch();
-        }
+        return userOptionChoice == JOptionPane.YES_OPTION;
     }
 
     private void configureFileHandling() {

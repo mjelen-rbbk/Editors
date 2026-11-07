@@ -42,7 +42,8 @@ import javax.swing.text.View;
 public class EditorModel extends JTextArea {
     public static final String DIRTY_PROPERTY = "dirty";
     private static final int GUIDE_COLUMN = 60;
-    private static final String GUIDE_WIDTH_TEXT = "0".repeat(GUIDE_COLUMN);
+    // Spalten sind 1-basiert: Spalte 60 beginnt nach 59 Zeichen.
+    private static final String GUIDE_WIDTH_TEXT = "0".repeat(GUIDE_COLUMN - 1);
 
     private int findPosition = -1;
     private Path filePath;
