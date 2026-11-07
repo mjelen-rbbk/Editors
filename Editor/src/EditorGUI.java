@@ -5,6 +5,8 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
@@ -67,6 +69,7 @@ public class EditorGUI extends javax.swing.JFrame {
     public EditorGUI() {
         initComponents();
 
+        configureLogoScaling();
         configureFileHandling();
         configureSearchHandling();
         configureExtras();
@@ -77,6 +80,25 @@ public class EditorGUI extends javax.swing.JFrame {
         editor.newDocument();
         updateLiveStatistics();
         updateWindowTitle();
+    }
+
+    private void configureLogoScaling() {
+        Dimension initialSize = getContentPane().getSize();
+        double initialArea = Math.max(1.0, (double) initialSize.width * initialSize.height);
+        setMinimumSize(getMinimumSize());
+        getContentPane().addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent event) {
+                double area = (double) getContentPane().getWidth() * getContentPane().getHeight();
+                int height = Math.max(48, Math.min(200,
+                        (int) Math.round(80 * Math.sqrt(area / initialArea))));
+                if (editorLogoPanel.getPreferredSize().height != height) {
+                    editorLogoPanel.setPreferredSize(new Dimension(40, height));
+                    editorLogoPanel.revalidate();
+                    editorLogoPanel.repaint();
+                }
+            }
+        });
     }
 
     /**
@@ -220,6 +242,7 @@ public class EditorGUI extends javax.swing.JFrame {
         statisticsLabel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         editorLogoPanel.setToolTipText("Editor-Logo");
+        editorLogoPanel.setPreferredSize(new java.awt.Dimension(40, 80));
 
         fileMenu.setMnemonic('D');
         fileMenu.setText("Datei");
@@ -393,7 +416,7 @@ public class EditorGUI extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(specialCharactersButton)
                         .addGap(18, 18, 18)
-                        .addComponent(editorLogoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(editorLogoPanel, 48, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(alertsPaneLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)

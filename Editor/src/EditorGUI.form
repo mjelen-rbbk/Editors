@@ -220,7 +220,7 @@
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="specialCharactersButton" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
-                      <Component id="editorLogoPanel" min="-2" pref="80" max="-2" attributes="0"/>
+                      <Component id="editorLogoPanel" min="48" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="1" attributes="0">
                       <Component id="alertsPaneLabel" min="-2" max="-2" attributes="0"/>
@@ -388,6 +388,9 @@
     <Container class="EditorLogoPanel" name="editorLogoPanel">
       <Properties>
         <Property name="toolTipText" type="java.lang.String" value="Editor-Logo"/>
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[40, 80]"/>
+        </Property>
       </Properties>
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.DesignFlowLayout"/>
