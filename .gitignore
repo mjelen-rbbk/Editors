@@ -25,3 +25,8 @@ hs_err_pid*
 replay_pid*
 /EditorSecond/build/
 /Editor/build/
+/Datenbanken/nbproject/private/
+/Datenbanken/build/
+/TableViewer/nbproject/private/
+/TableViewer/build/
+/Blockwoche/nbproject/private/
