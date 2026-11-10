@@ -143,6 +143,7 @@ public class TableView extends javax.swing.JFrame {
 
     private void connectToDbAndViewData(String tableName) {
         DefaultTableModel tableModel = (DefaultTableModel) contentTable.getModel();
+        tableModel.setColumnCount(0);
         
         var database = new DataBase("");
         var connection = database.getConnection();
@@ -153,6 +154,11 @@ public class TableView extends javax.swing.JFrame {
             try(var rs = ps.executeQuery()) {
                 var metaData = rs.getMetaData();
                 int columnCount = metaData.getColumnCount();
+                
+                for (int i = 1; i <= columnCount; i++) {
+                    String columnName = metaData.getColumnName(i);
+                    tableModel.addColumn(columnName);
+                }
             }
         } catch (SQLException ignored) {
             
