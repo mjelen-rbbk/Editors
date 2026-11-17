@@ -1,3 +1,8 @@
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Map;
+
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
@@ -27,21 +32,92 @@ public class StockExchangeView extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jScrollPane1 = new javax.swing.JScrollPane();
+        entryList = new javax.swing.JList<>();
+        deleteSelectedEntriesButton = new javax.swing.JButton();
+        xyLinStatPanel1 = new xswing.XyLinStatPanel();
+        jMenuBar1 = new javax.swing.JMenuBar();
+        fileMenu = new javax.swing.JMenu();
+        openFileMenuItem = new javax.swing.JMenuItem();
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+
+        entryList.setModel(new javax.swing.AbstractListModel<String>() {
+            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+            public int getSize() { return strings.length; }
+            public String getElementAt(int i) { return strings[i]; }
+        });
+        jScrollPane1.setViewportView(entryList);
+
+        deleteSelectedEntriesButton.setText("Markierte Einträge löschen");
+        deleteSelectedEntriesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteSelectedEntriesButtonActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout xyLinStatPanel1Layout = new javax.swing.GroupLayout(xyLinStatPanel1);
+        xyLinStatPanel1.setLayout(xyLinStatPanel1Layout);
+        xyLinStatPanel1Layout.setHorizontalGroup(
+            xyLinStatPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 690, Short.MAX_VALUE)
+        );
+        xyLinStatPanel1Layout.setVerticalGroup(
+            xyLinStatPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 418, Short.MAX_VALUE)
+        );
+
+        fileMenu.setText("Datei");
+
+        openFileMenuItem.setText("Öffnen...");
+        openFileMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                openFileMenuItemActionPerformed(evt);
+            }
+        });
+        fileMenu.add(openFileMenuItem);
+
+        jMenuBar1.add(fileMenu);
+
+        setJMenuBar(jMenuBar1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 231, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(deleteSelectedEntriesButton)
+                    .addComponent(xyLinStatPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 690, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(295, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(0, 9, Short.MAX_VALUE)
+                        .addComponent(xyLinStatPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 418, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(deleteSelectedEntriesButton)))
+                .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void deleteSelectedEntriesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteSelectedEntriesButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_deleteSelectedEntriesButtonActionPerformed
+
+    private void openFileMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openFileMenuItemActionPerformed
+        loadFileAndVisualize(Path.of("/home/info/Dokumente/data/MSCI_World_1998-12-31_2025-11-19.csv"));
+    }//GEN-LAST:event_openFileMenuItemActionPerformed
 
     /**
      * @param args the command line arguments
@@ -69,5 +145,32 @@ public class StockExchangeView extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton deleteSelectedEntriesButton;
+    private javax.swing.JList<String> entryList;
+    private javax.swing.JMenu fileMenu;
+    private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JMenuItem openFileMenuItem;
+    private xswing.XyLinStatPanel xyLinStatPanel1;
     // End of variables declaration//GEN-END:variables
+
+    private void loadFileAndVisualize(Path filePath) {
+        Map<String, Double> dataEntries = loadFile(filePath);
+        if (dataEntries == null) {
+            return;
+        }
+        
+        
+    }
+    
+    private Map<String, Double> loadFile(Path filePath) {
+        try {
+            var fileParser = new CsvFileParser();
+            return fileParser.parseFile(filePath);
+        } catch (IOException ex) {
+            System.getLogger(StockExchangeView.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        }
+        
+        return null;
+    }
 }

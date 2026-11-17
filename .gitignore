@@ -31,3 +31,5 @@ replay_pid*
 /TableViewer/build/
 /Blockwoche/nbproject/private/
 /StockExchangeViewer/nbproject/private/
+/StockExchangeViewer/build/
+/StockExchangeViewer/dist/
