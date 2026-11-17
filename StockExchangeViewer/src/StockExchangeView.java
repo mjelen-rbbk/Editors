@@ -1,7 +1,10 @@
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import javax.swing.ListModel;
 
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
@@ -160,7 +163,7 @@ public class StockExchangeView extends javax.swing.JFrame {
             return;
         }
         
-        
+        entryList.setListData(dataEntries.keySet().toArray(new String[]{}));
     }
     
     private Map<String, Double> loadFile(Path filePath) {
