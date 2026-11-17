@@ -148,7 +148,7 @@ public class TableView extends javax.swing.JFrame {
         var database = new DataBase("");
         var connection = database.getConnection();
         
-        try(var ps = connection.prepareStatement("SELECT * FROM %")) {
+        try(var ps = connection.prepareStatement("SELECT * FROM ?")) {
             ps.setString(1, tableName);
             
             try(var rs = ps.executeQuery()) {
@@ -160,8 +160,8 @@ public class TableView extends javax.swing.JFrame {
                     tableModel.addColumn(columnName);
                 }
             }
-        } catch (SQLException ignored) {
-            
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex);
         }
     }
 }
