@@ -20,6 +20,7 @@ public class CsvFileParser {
         Map<String, Double> entryPairs = Files.readAllLines(filePath)
         .stream()
         .skip(1)
+        .sorted()
         .filter(line -> !line.isBlank())
         .map(line -> line.split(";"))
         .filter(parts -> parts.length >= 2)
