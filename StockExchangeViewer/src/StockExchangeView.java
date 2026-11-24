@@ -1,10 +1,15 @@
-
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import javax.swing.ListModel;
+import java.util.TreeMap;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.ListSelectionModel;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
@@ -16,14 +21,28 @@ import javax.swing.ListModel;
  * @author info
  */
 public class StockExchangeView extends javax.swing.JFrame {
-    
+
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(StockExchangeView.class.getName());
+    private Map<String, Double> dataEntries = new TreeMap<>();
+    private List<String> dates = new ArrayList<>();
 
     /**
      * Creates new form StockExchangeView
      */
     public StockExchangeView() {
         initComponents();
+        setTitle("StockExchangeViewer");
+        entryList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        entryList.setListData(new String[0]);
+        xyLinStatPanel1.clearDatasets();
+        deleteSelectedEntriesButton.setEnabled(false);
+
+        entryList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                deleteSelectedEntriesButton.setEnabled(!entryList.isSelectionEmpty());
+                showData();
+            }
+        });
     }
 
     /**
@@ -115,11 +134,21 @@ public class StockExchangeView extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void deleteSelectedEntriesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteSelectedEntriesButtonActionPerformed
-        // TODO add your handling code here:
+        int[] selectedIndices = entryList.getSelectedIndices();
+        entryList.clearSelection();
+        for (int index : selectedIndices) {
+            dataEntries.remove(dates.get(index));
+        }
+        refreshList();
+        showData();
     }//GEN-LAST:event_deleteSelectedEntriesButtonActionPerformed
 
     private void openFileMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openFileMenuItemActionPerformed
-        loadFileAndVisualize(Path.of("/home/info/Dokumente/data/MSCI_World_1998-12-31_2025-11-19.csv"));
+        JFileChooser chooser = new JFileChooser();
+        chooser.setFileFilter(new FileNameExtensionFilter("CSV-Dateien (*.csv)", "csv"));
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            loadFileAndVisualize(chooser.getSelectedFile().toPath());
+        }
     }//GEN-LAST:event_openFileMenuItemActionPerformed
 
     /**
@@ -129,7 +158,7 @@ public class StockExchangeView extends javax.swing.JFrame {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html
          */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
@@ -158,22 +187,77 @@ public class StockExchangeView extends javax.swing.JFrame {
     // End of variables declaration//GEN-END:variables
 
     private void loadFileAndVisualize(Path filePath) {
-        Map<String, Double> dataEntries = loadFile(filePath);
-        if (dataEntries == null) {
+        Map<String, Double> loadedEntries = loadFile(filePath);
+        if (loadedEntries == null) {
             return;
         }
-        
-        entryList.setListData(dataEntries.keySet().toArray(new String[]{}));
+
+        entryList.clearSelection();
+        dataEntries = loadedEntries;
+        setTitle(filePath.getFileName().toString());
+        refreshList();
+        showData();
     }
-    
+
     private Map<String, Double> loadFile(Path filePath) {
         try {
-            var fileParser = new CsvFileParser();
-            return fileParser.parseFile(filePath);
+            return new CsvFileParser().parseFile(filePath);
         } catch (IOException ex) {
-            System.getLogger(StockExchangeView.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(),
+                    "Fehler beim Öffnen", JOptionPane.ERROR_MESSAGE);
+            return null;
         }
-        
-        return null;
+    }
+
+    private void refreshList() {
+        entryList.clearSelection();
+        dates = new ArrayList<>(dataEntries.keySet());
+        String[] entries = new String[dates.size()];
+        for (int i = 0; i < dates.size(); i++) {
+            String date = dates.get(i);
+            entries[i] = String.format(Locale.GERMANY, "%s: %.2f", date, dataEntries.get(date));
+        }
+        entryList.setListData(entries);
+        deleteSelectedEntriesButton.setEnabled(false);
+    }
+
+    private double toDecimalYear(String value) {
+        LocalDate date = LocalDate.parse(value);
+        return date.getYear() + (date.getDayOfYear() - 1) / (double) date.lengthOfYear();
+    }
+
+    private void showData() {
+        xyLinStatPanel1.clearDatasets();
+        if (dates.isEmpty()) {
+            xyLinStatPanel1.setManualYRange(0, 1);
+            return;
+        }
+
+        double[] x = new double[dates.size()];
+        double[] y = new double[dates.size()];
+        double minY = 0;
+        double maxY = 0;
+        for (int i = 0; i < dates.size(); i++) {
+            x[i] = toDecimalYear(dates.get(i));
+            y[i] = dataEntries.get(dates.get(i));
+            minY = Math.min(minY, y[i]);
+            maxY = Math.max(maxY, y[i]);
+        }
+        if (minY == maxY) {
+            maxY = minY + 1;
+        }
+
+        xyLinStatPanel1.setManualYRange(minY, maxY);
+        // Kursverlauf mit Linien und statistischer Auswertung.
+        xyLinStatPanel1.setDataset1(x, y, true, true);
+
+        int selectedIndex = entryList.getSelectedIndex();
+        if (selectedIndex >= 0 && selectedIndex < x.length) {
+            // Zweiter Datensatz: vertikale Linie ohne eigene Ausgleichsgerade.
+            double selectedX = x[selectedIndex];
+            xyLinStatPanel1.setDataset2(
+                    new double[]{selectedX, selectedX},
+                    new double[]{minY, maxY}, true, false);
+        }
     }
 }
